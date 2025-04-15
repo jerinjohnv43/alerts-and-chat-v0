@@ -1,0 +1,141 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { 
+  BarChart3, 
+  Bell, 
+  Settings, 
+  Users, 
+  Activity,
+  AlertTriangle,
+  History,
+  Home,
+  X
+} from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface NavItemProps {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  active?: boolean;
+}
+
+function NavItem({ icon: Icon, label, href, active }: NavItemProps) {
+  return (
+    <Link
+      to={href}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        active 
+          ? "bg-primary text-primary-foreground" 
+          : "hover:bg-muted"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const pathname = window.location.pathname;
+  
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 w-64 transform border-r bg-background transition-transform duration-200 lg:translate-x-0 lg:static lg:z-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-full flex-col">
+          <div className="flex h-14 items-center border-b px-4 justify-between">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold">
+                BI
+              </div>
+              <span className="text-lg font-semibold">Alert Insights</span>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 px-3 py-4">
+            <div className="space-y-1">
+              <NavItem 
+                icon={Home} 
+                label="Dashboard" 
+                href="/" 
+                active={pathname === "/"} 
+              />
+              <NavItem 
+                icon={AlertTriangle} 
+                label="Alerts" 
+                href="/alerts" 
+                active={pathname === "/alerts"} 
+              />
+              <NavItem 
+                icon={Activity} 
+                label="Monitor" 
+                href="/monitor" 
+                active={pathname === "/monitor"} 
+              />
+              <NavItem 
+                icon={History} 
+                label="History" 
+                href="/history" 
+                active={pathname === "/history"} 
+              />
+              <NavItem 
+                icon={BarChart3} 
+                label="Analytics" 
+                href="/analytics" 
+                active={pathname === "/analytics"} 
+              />
+              <NavItem 
+                icon={Users} 
+                label="User Management" 
+                href="/users" 
+                active={pathname === "/users"} 
+              />
+              <NavItem 
+                icon={Settings} 
+                label="Settings" 
+                href="/settings" 
+                active={pathname === "/settings"} 
+              />
+            </div>
+          </ScrollArea>
+          <div className="border-t p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <User className="h-4 w-4" />
+              </div>
+              <div className="text-sm">
+                <p className="font-medium">Admin User</p>
+                <p className="text-muted-foreground text-xs">admin@example.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
