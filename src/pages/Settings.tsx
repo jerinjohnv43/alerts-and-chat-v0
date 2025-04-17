@@ -28,7 +28,9 @@ import {
   Heading1,
   Save,
   Sliders,
-  FileKey
+  FileKey,
+  Database,
+  Boxes
 } from 'lucide-react';
 
 const Settings = () => {
@@ -151,6 +153,71 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Fabric Connection Settings
+              </CardTitle>
+              <CardDescription>
+                Configure Microsoft Fabric data warehouse connection details.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fabric-workspace">Fabric Workspace</Label>
+                <Input 
+                  id="fabric-workspace" 
+                  placeholder="Enter your Fabric workspace name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fabric-warehouse">Warehouse Name</Label>
+                <Input 
+                  id="fabric-warehouse" 
+                  placeholder="Enter your warehouse name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fabric-endpoint">API Endpoint</Label>
+                <Input 
+                  id="fabric-endpoint" 
+                  placeholder="https://api.fabric.microsoft.com/v1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fabric-api-key">Fabric API Key</Label>
+                <Input 
+                  id="fabric-api-key" 
+                  type="password" 
+                  placeholder="Enter your Fabric API key"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fabric-connection-type">Connection Type</Label>
+                <Select defaultValue="direct">
+                  <SelectTrigger id="fabric-connection-type">
+                    <SelectValue placeholder="Select a connection type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="direct">Direct Connection</SelectItem>
+                    <SelectItem value="gateway">Gateway Connection</SelectItem>
+                    <SelectItem value="oauth">OAuth</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Test Connection on Save</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Verify connectivity when saving settings.
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
         <div className="space-y-6">
@@ -221,7 +288,7 @@ Alert Insights Team`}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="llm-provider">LLM Provider</Label>
-                <Select defaultValue="openai">
+                <Select defaultValue="azure">
                   <SelectTrigger id="llm-provider">
                     <SelectValue placeholder="Select a provider" />
                   </SelectTrigger>
@@ -241,6 +308,13 @@ Alert Insights Team`}
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="azure-endpoint">Azure OpenAI Endpoint</Label>
+                <Input 
+                  id="azure-endpoint" 
+                  placeholder="https://your-resource.openai.azure.com/"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="llm-model">LLM Model</Label>
                 <Select defaultValue="gpt-4">
                   <SelectTrigger id="llm-model">
@@ -248,10 +322,37 @@ Alert Insights Team`}
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="gpt-4">GPT-4</SelectItem>
+                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                     <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
                     <SelectItem value="claude-2">Claude 2</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="llm-temperature">Temperature</Label>
+                <Input 
+                  id="llm-temperature" 
+                  type="number" 
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  defaultValue="0.7"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Values between 0-1. Lower values produce more consistent outputs, higher values produce more creative outputs.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="llm-max-tokens">Max Output Tokens</Label>
+                <Input 
+                  id="llm-max-tokens" 
+                  type="number" 
+                  min="100"
+                  defaultValue="2000"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Maximum number of tokens the model should generate in its response.
+                </p>
               </div>
             </CardContent>
           </Card>
