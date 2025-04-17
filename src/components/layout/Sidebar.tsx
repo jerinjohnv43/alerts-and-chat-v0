@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
   BarChart3, 
@@ -37,7 +37,7 @@ function NavItem({ icon: Icon, label, href, active }: NavItemProps) {
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
         active 
           ? "bg-primary text-primary-foreground" 
-          : "hover:bg-muted"
+          : "hover:bg-muted hover:text-foreground"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -47,7 +47,8 @@ function NavItem({ icon: Icon, label, href, active }: NavItemProps) {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const pathname = window.location.pathname;
+  const location = useLocation();
+  const pathname = location.pathname;
   
   return (
     <>
@@ -79,7 +80,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Button>
           </div>
           <ScrollArea className="flex-1 px-3 py-4">
-            <div className="space-y-1">
+            <nav className="space-y-1">
               <NavItem 
                 icon={Home} 
                 label="Dashboard" 
@@ -90,7 +91,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 icon={AlertTriangle} 
                 label="Alerts" 
                 href="/alerts" 
-                active={pathname === "/alerts"} 
+                active={pathname === "/alerts" || pathname.startsWith("/alerts/")} 
               />
               <NavItem 
                 icon={Activity} 
@@ -122,7 +123,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 href="/settings" 
                 active={pathname === "/settings"} 
               />
-            </div>
+            </nav>
           </ScrollArea>
           <div className="border-t p-4">
             <div className="flex items-center gap-3">
