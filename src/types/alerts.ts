@@ -15,6 +15,7 @@ export interface Alert {
   recipients: string[];
   createdAt: string;
   updatedAt: string;
+  datasets?: string[]; // Added to support multiple datasets
 }
 
 export interface AlertHistory {

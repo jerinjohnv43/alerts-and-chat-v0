@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 const createAlertSchema = z.object({
   name: z.string().min(3, { message: "Alert name must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  dataset: z.string({ required_error: "Please select a dataset." }),
+  datasets: z.array(z.string()).min(1, { message: "Select at least one dataset." }),
   kpi: z.string({ required_error: "Please select a KPI." }),
   dimensions: z.array(z.string()).min(1, { message: "Select at least one dimension." }),
   emailTemplate: z.string({ required_error: "Please select an email template." }),
@@ -68,7 +68,7 @@ const CreateAlert = () => {
     defaultValues: {
       name: "",
       description: "",
-      dataset: "",
+      datasets: [],
       kpi: "",
       dimensions: [],
       emailTemplate: "",
@@ -181,33 +181,60 @@ const CreateAlert = () => {
               <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
                 <div className="flex items-center gap-2">
                   <Database className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Data Source</h2>
+                  <h2 className="text-xl font-semibold">Data Sources</h2>
                 </div>
                 <Separator />
                 
                 <FormField
                   control={form.control}
-                  name="dataset"
-                  render={({ field }) => (
+                  name="datasets"
+                  render={() => (
                     <FormItem>
-                      <FormLabel>Dataset</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a dataset" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {datasets.map((dataset) => (
-                            <SelectItem key={dataset.id} value={dataset.id}>
-                              {dataset.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose the dataset for this alert to monitor.
-                      </FormDescription>
+                      <div className="mb-4">
+                        <FormLabel>Datasets</FormLabel>
+                        <FormDescription>
+                          Select one or more datasets for this alert to monitor.
+                        </FormDescription>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2">
+                        {datasets.map((dataset) => (
+                          <FormField
+                            key={dataset.id}
+                            control={form.control}
+                            name="datasets"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={dataset.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-slate-50"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(dataset.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, dataset.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== dataset.id
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-base">{dataset.name}</FormLabel>
+                                    <FormDescription>
+                                      Contains metrics related to {dataset.name.toLowerCase()}
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
