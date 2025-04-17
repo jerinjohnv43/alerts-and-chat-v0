@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -32,7 +31,13 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
   };
   
   return (
-    <Card className="h-full transition-all hover:shadow-lg backdrop-blur-sm bg-white/40 dark:bg-black/20 border-white/20 dark:border-white/10">
+    <Card className={cn(
+      "h-full transition-all hover:shadow-lg backdrop-blur-sm",
+      "bg-white/30 dark:bg-black/20",
+      "border-white/20 dark:border-white/10",
+      "shadow-lg hover:shadow-xl",
+      "glass-card"
+    )}>
       <CardHeader className="space-y-1">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{alert.name}</CardTitle>
@@ -67,7 +72,10 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={cn(
+        "space-y-4",
+        "backdrop-blur-sm"
+      )}>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -87,7 +95,7 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="backdrop-blur-sm">
         <Link to={`/alerts/${alert.id}`} className="text-primary text-sm hover:underline w-full text-center">
           View Details
         </Link>
