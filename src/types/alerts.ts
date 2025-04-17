@@ -12,7 +12,11 @@ export interface Alert {
   cost: number;
   successRate: number;
   failureCount: number;
-  recipients: string[];
+  recipients: {
+    email?: string[];
+    whatsapp?: string[];
+    teams?: string[];
+  };
   createdAt: string;
   updatedAt: string;
   datasets?: string[]; // Added to support multiple datasets
@@ -42,4 +46,12 @@ export interface AlertMetrics {
   totalTriggers: number;
   totalCost: number;
   averageSuccessRate: number;
+}
+
+export type NotificationType = 'email' | 'whatsapp' | 'teams';
+
+export interface NotificationSettings {
+  email: boolean;
+  whatsapp: boolean;
+  teams: boolean;
 }

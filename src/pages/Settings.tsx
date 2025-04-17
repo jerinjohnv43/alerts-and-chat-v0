@@ -31,7 +31,9 @@ import {
   Sliders,
   FileKey,
   Database,
-  Boxes
+  Boxes,
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 // Email templates defined here to match those in the CreateAlert component
@@ -162,6 +164,32 @@ Alert Insights Team`
                   <Switch defaultChecked />
                 </div>
                 <Separator />
+                
+                {/* WhatsApp Notification Setting */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>WhatsApp Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send WhatsApp messages when alerts are triggered.
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+                <Separator />
+                
+                {/* MS Teams Notification Setting */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>MS Teams Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send MS Teams messages when alerts are triggered.
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+                <Separator />
+                
+                {/* Original notification settings */}
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Daily Summary</Label>
@@ -195,6 +223,103 @@ Alert Insights Team`
             </CardContent>
           </Card>
           
+          {/* Add WhatsApp Configuration Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                WhatsApp Integration
+              </CardTitle>
+              <CardDescription>
+                Configure WhatsApp messaging integration for alerts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp-api-key">WhatsApp Business API Key</Label>
+                <Input 
+                  id="whatsapp-api-key" 
+                  type="password"
+                  placeholder="Enter your WhatsApp Business API key"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp-phone-id">WhatsApp Phone Number ID</Label>
+                <Input 
+                  id="whatsapp-phone-id" 
+                  placeholder="Enter your WhatsApp Phone Number ID"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp-business-id">WhatsApp Business Account ID</Label>
+                <Input 
+                  id="whatsapp-business-id" 
+                  placeholder="Enter your WhatsApp Business Account ID"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Test Connection</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Send a test message to verify your WhatsApp setup.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm">Test</Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Add MS Teams Configuration Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                MS Teams Integration
+              </CardTitle>
+              <CardDescription>
+                Configure Microsoft Teams webhook integration for alerts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="teams-webhook">Teams Incoming Webhook URL</Label>
+                <Input 
+                  id="teams-webhook" 
+                  type="password"
+                  placeholder="Enter your Microsoft Teams webhook URL"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teams-tenant-id">MS Teams Tenant ID</Label>
+                <Input 
+                  id="teams-tenant-id" 
+                  placeholder="Enter your Microsoft Teams Tenant ID"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teams-user-list">Default MS Teams Recipients</Label>
+                <Textarea 
+                  id="teams-user-list"
+                  placeholder="user1@example.com, user2@example.com"
+                  className="min-h-[80px]"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter Microsoft Teams user emails, separated by commas. These users will be available as recipients when creating alerts.
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Test Connection</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Send a test message to verify your Teams integration.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm">Test</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Original security settings card */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
