@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { AlertTriangle, ArrowLeft, Bell, Database, Mail, Layers, Bot, Gauge } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Bell, Database, Mail, Bot, Square, Check } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,40 +15,30 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/components/ui/use-toast";
-
-// Form schema
-const createAlertSchema = z.object({
-  name: z.string().min(3, { message: "Alert name must be at least 3 characters." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  datasets: z.array(z.string()).min(1, { message: "Select at least one dataset." }),
-  kpi: z.string({ required_error: "Please select a KPI." }),
-  dimensions: z.array(z.string()).min(1, { message: "Select at least one dimension." }),
-  emailTemplate: z.string({ required_error: "Please select an email template." }),
-  systemPrompt: z.string().optional(),
-  recipients: z.string().min(5, { message: "Add at least one recipient email." }),
-  active: z.boolean().default(true),
-});
-
-type CreateAlertValues = z.infer<typeof createAlertSchema>;
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Dataset definitions with their associated KPIs and dimensions
 const datasetsConfig = {
   sales_data: {
+    id: "sales_data",
     name: "Sales Data",
     kpis: ["revenue", "conversion_rate"],
     dimensions: ["time", "product", "customer_segment", "channel"]
   },
   marketing_data: {
+    id: "marketing_data",
     name: "Marketing Data",
     kpis: ["conversion_rate", "customer_acquisition"],
     dimensions: ["time", "geography", "channel"]
   },
   finance_data: {
+    id: "finance_data",
     name: "Financial Data",
     kpis: ["revenue", "churn_rate"],
     dimensions: ["time", "product"]
   },
   operations_data: {
+    id: "operations_data",
     name: "Operations Data",
     kpis: ["churn_rate"],
     dimensions: ["time", "geography", "customer_segment"]
@@ -56,10 +46,7 @@ const datasetsConfig = {
 };
 
 // Dataset array for rendering
-const datasets = Object.entries(datasetsConfig).map(([id, config]) => ({
-  id,
-  name: config.name
-}));
+const datasets = Object.values(datasetsConfig);
 
 // KPI definitions
 const kpiConfig = {
@@ -84,20 +71,41 @@ const emailTemplates = [
   { id: "executive", name: "Executive Summary" },
 ];
 
+// Form schema with nested structure for datasets
+const createAlertSchema = z.object({
+  name: z.string().min(3, { message: "Alert name must be at least 3 characters." }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  datasetSelections: z.array(z.object({
+    datasetId: z.string(),
+    selectedKpi: z.string().optional(),
+    selectedDimensions: z.array(z.string()).min(1, { message: "Select at least one dimension." }).optional(),
+  })).min(1, { message: "Select at least one dataset with KPI and dimensions." }),
+  emailTemplate: z.string({ required_error: "Please select an email template." }),
+  systemPrompt: z.string().optional(),
+  recipients: z.string().min(5, { message: "Add at least one recipient email." }),
+  active: z.boolean().default(true),
+}).refine(data => {
+  // Check if at least one dataset has both KPI and dimensions
+  return data.datasetSelections.some(
+    ds => ds.selectedKpi && ds.selectedDimensions && ds.selectedDimensions.length > 0
+  );
+}, {
+  message: "At least one dataset must have both KPI and dimensions selected",
+  path: ["datasetSelections"],
+});
+
+type CreateAlertValues = z.infer<typeof createAlertSchema>;
+
 const CreateAlert = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [availableKpis, setAvailableKpis] = useState<{id: string, name: string}[]>([]);
-  const [availableDimensions, setAvailableDimensions] = useState<{id: string, name: string}[]>([]);
-  
+
   const form = useForm<CreateAlertValues>({
     resolver: zodResolver(createAlertSchema),
     defaultValues: {
       name: "",
       description: "",
-      datasets: [],
-      kpi: "",
-      dimensions: [],
+      datasetSelections: [],
       emailTemplate: "",
       systemPrompt: "",
       recipients: "",
@@ -105,65 +113,89 @@ const CreateAlert = () => {
     },
   });
 
-  // Watch for changes in datasets selection
-  const selectedDatasets = form.watch("datasets");
-
-  // Update available KPIs and dimensions based on selected datasets
-  useEffect(() => {
-    if (selectedDatasets.length === 0) {
-      setAvailableKpis([]);
-      setAvailableDimensions([]);
-      return;
-    }
-
-    // Get all KPIs from selected datasets
-    const kpisSet = new Set<string>();
-    selectedDatasets.forEach(datasetId => {
-      const dataset = datasetsConfig[datasetId as keyof typeof datasetsConfig];
-      if (dataset) {
-        dataset.kpis.forEach(kpi => kpisSet.add(kpi));
+  // Selected datasets state
+  const [selectedDatasetIds, setSelectedDatasetIds] = useState<string[]>([]);
+  
+  // Add or remove dataset from selections
+  const handleDatasetToggle = (datasetId: string, checked: boolean) => {
+    const currentSelections = form.getValues("datasetSelections");
+    
+    if (checked) {
+      // Add the dataset if it doesn't already exist
+      if (!currentSelections.find(ds => ds.datasetId === datasetId)) {
+        form.setValue("datasetSelections", [
+          ...currentSelections,
+          { datasetId, selectedKpi: undefined, selectedDimensions: [] }
+        ]);
+        setSelectedDatasetIds(prev => [...prev, datasetId]);
       }
-    });
+    } else {
+      // Remove the dataset if it exists
+      form.setValue("datasetSelections", 
+        currentSelections.filter(ds => ds.datasetId !== datasetId)
+      );
+      setSelectedDatasetIds(prev => prev.filter(id => id !== datasetId));
+    }
+  };
+
+  // Check if a dataset is selected
+  const isDatasetSelected = (datasetId: string) => {
+    return selectedDatasetIds.includes(datasetId);
+  }
+  
+  // Update KPI for a dataset
+  const handleKpiChange = (datasetId: string, kpi: string) => {
+    const currentSelections = form.getValues("datasetSelections");
+    const updatedSelections = currentSelections.map(ds => 
+      ds.datasetId === datasetId 
+        ? { ...ds, selectedKpi: kpi } 
+        : ds
+    );
+    form.setValue("datasetSelections", updatedSelections);
+  };
+
+  // Update dimensions for a dataset
+  const handleDimensionToggle = (datasetId: string, dimension: string, checked: boolean) => {
+    const currentSelections = form.getValues("datasetSelections");
+    const datasetIndex = currentSelections.findIndex(ds => ds.datasetId === datasetId);
     
-    // Get all dimensions from selected datasets
-    const dimensionsSet = new Set<string>();
-    selectedDatasets.forEach(datasetId => {
-      const dataset = datasetsConfig[datasetId as keyof typeof datasetsConfig];
-      if (dataset) {
-        dataset.dimensions.forEach(dimension => dimensionsSet.add(dimension));
+    if (datasetIndex !== -1) {
+      const currentDimensions = currentSelections[datasetIndex].selectedDimensions || [];
+      let newDimensions;
+      
+      if (checked) {
+        // Add dimension
+        newDimensions = [...currentDimensions, dimension];
+      } else {
+        // Remove dimension
+        newDimensions = currentDimensions.filter(dim => dim !== dimension);
       }
-    });
-    
-    // Convert sets to arrays of objects with id and name
-    setAvailableKpis(Array.from(kpisSet).map(id => ({
-      id,
-      name: kpiConfig[id as keyof typeof kpiConfig].name
-    })));
-    
-    setAvailableDimensions(Array.from(dimensionsSet).map(id => ({
-      id,
-      name: dimensionsConfig[id as keyof typeof dimensionsConfig].name
-    })));
-
-    // Clear KPI selection if current selection is not available in the new list
-    const currentKpi = form.getValues("kpi");
-    if (currentKpi && !kpisSet.has(currentKpi)) {
-      form.setValue("kpi", "");
+      
+      const updatedSelections = [...currentSelections];
+      updatedSelections[datasetIndex] = {
+        ...updatedSelections[datasetIndex],
+        selectedDimensions: newDimensions
+      };
+      
+      form.setValue("datasetSelections", updatedSelections);
     }
+  };
 
-    // Filter dimensions selection to only include available dimensions
-    const currentDimensions = form.getValues("dimensions");
-    const filteredDimensions = currentDimensions.filter(dim => dimensionsSet.has(dim));
-    if (filteredDimensions.length !== currentDimensions.length) {
-      form.setValue("dimensions", filteredDimensions);
-    }
-  }, [selectedDatasets, form]);
+  // Check if a dimension is selected for a dataset
+  const isDimensionSelected = (datasetId: string, dimension: string) => {
+    const datasetSelections = form.getValues("datasetSelections");
+    const datasetSelection = datasetSelections.find(ds => ds.datasetId === datasetId);
+    return datasetSelection?.selectedDimensions?.includes(dimension) || false;
+  };
+
+  // Get selected KPI for a dataset
+  const getSelectedKpi = (datasetId: string) => {
+    const datasetSelections = form.getValues("datasetSelections");
+    return datasetSelections.find(ds => ds.datasetId === datasetId)?.selectedKpi || "";
+  };
 
   const onSubmit = (data: CreateAlertValues) => {
     console.log("Form submitted:", data);
-    
-    // In a real application, this would send the data to your API
-    // For now, we'll just show a success toast and navigate back
     
     toast({
       title: "Alert created",
@@ -258,7 +290,7 @@ const CreateAlert = () => {
                 />
               </div>
               
-              {/* Merged Data Sources and Dimensions Section */}
+              {/* Data Sources & Dimensions Section */}
               <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
                 <div className="flex items-center gap-2">
                   <Database className="h-5 w-5 text-blue-600" />
@@ -266,149 +298,87 @@ const CreateAlert = () => {
                 </div>
                 <Separator />
                 
-                {/* Datasets Selection */}
+                {/* Datasets with nested KPIs and Dimensions */}
                 <FormField
                   control={form.control}
-                  name="datasets"
+                  name="datasetSelections"
                   render={() => (
                     <FormItem>
                       <div className="mb-4">
                         <FormLabel>Datasets</FormLabel>
                         <FormDescription>
-                          Select one or more datasets for this alert to monitor.
+                          Select one or more datasets and configure their KPIs and dimensions.
                         </FormDescription>
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="space-y-4">
                         {datasets.map((dataset) => (
-                          <FormField
-                            key={dataset.id}
-                            control={form.control}
-                            name="datasets"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={dataset.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-slate-50"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(dataset.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, dataset.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== dataset.id
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel className="text-base">{dataset.name}</FormLabel>
-                                    <FormDescription>
-                                      Contains metrics related to {dataset.name.toLowerCase()}
-                                    </FormDescription>
+                          <Card key={dataset.id} className="overflow-hidden border-2 transition-all duration-200 hover:border-blue-200">
+                            <CardHeader className="bg-slate-50 p-4 flex flex-row items-center space-y-0 gap-3">
+                              <Checkbox
+                                id={`dataset-${dataset.id}`}
+                                checked={isDatasetSelected(dataset.id)}
+                                onCheckedChange={(checked) => 
+                                  handleDatasetToggle(dataset.id, checked === true)
+                                }
+                              />
+                              <CardTitle className="text-base font-medium">{dataset.name}</CardTitle>
+                            </CardHeader>
+                            
+                            {isDatasetSelected(dataset.id) && (
+                              <CardContent className="p-4 pt-6 bg-white">
+                                {/* KPI Selection */}
+                                <div className="mb-6">
+                                  <FormLabel className="mb-2 block">KPI for {dataset.name}</FormLabel>
+                                  <Select 
+                                    value={getSelectedKpi(dataset.id)}
+                                    onValueChange={(value) => handleKpiChange(dataset.id, value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select a KPI" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {dataset.kpis.map((kpiId) => (
+                                        <SelectItem key={kpiId} value={kpiId}>
+                                          {kpiConfig[kpiId as keyof typeof kpiConfig]?.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                {/* Dimensions Selection */}
+                                <div>
+                                  <FormLabel className="mb-2 block">Dimensions for {dataset.name}</FormLabel>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {dataset.dimensions.map((dimensionId) => (
+                                      <div key={dimensionId} className="flex items-center space-x-2">
+                                        <Checkbox 
+                                          id={`${dataset.id}-${dimensionId}`}
+                                          checked={isDimensionSelected(dataset.id, dimensionId)}
+                                          onCheckedChange={(checked) => 
+                                            handleDimensionToggle(dataset.id, dimensionId, checked === true)
+                                          }
+                                        />
+                                        <label 
+                                          htmlFor={`${dataset.id}-${dimensionId}`}
+                                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                          {dimensionsConfig[dimensionId as keyof typeof dimensionsConfig]?.name}
+                                        </label>
+                                      </div>
+                                    ))}
                                   </div>
-                                </FormItem>
-                              )
-                            }}
-                          />
+                                </div>
+                              </CardContent>
+                            )}
+                          </Card>
                         ))}
                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                {/* KPI Selection - Show only if datasets are selected */}
-                {availableKpis.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="kpi"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KPI</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a KPI" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableKpis.map((kpi) => (
-                              <SelectItem key={kpi.id} value={kpi.id}>
-                                <div className="flex items-center gap-2">
-                                  <Gauge className="h-4 w-4" />
-                                  <span>{kpi.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Select the key performance indicator to track.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                
-                {/* Dimensions Selection - Show only if datasets are selected */}
-                {availableDimensions.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="dimensions"
-                    render={() => (
-                      <FormItem>
-                        <div className="mb-4">
-                          <FormLabel>Analysis Dimensions</FormLabel>
-                          <FormDescription>
-                            Select the dimensions to analyze for this alert.
-                          </FormDescription>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {availableDimensions.map((dimension) => (
-                            <FormField
-                              key={dimension.id}
-                              control={form.control}
-                              name="dimensions"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem
-                                    key={dimension.id}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(dimension.id)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, dimension.id])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== dimension.id
-                                                )
-                                              )
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                      {dimension.name}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
             </div>
 
