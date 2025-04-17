@@ -26,7 +26,9 @@ export const alerts: Alert[] = [
     cost: 3.24,
     successRate: 95,
     failureCount: 1,
-    recipients: ["user1@example.com", "user2@example.com"],
+    recipients: {
+      email: ["user1@example.com", "user2@example.com"]
+    },
     createdAt: "2023-01-05T10:00:00Z",
     updatedAt: "2023-04-14T16:45:00Z"
   },
@@ -43,7 +45,9 @@ export const alerts: Alert[] = [
     cost: 0.81,
     successRate: 100,
     failureCount: 0,
-    recipients: ["user3@example.com"],
+    recipients: {
+      email: ["user3@example.com"]
+    },
     createdAt: "2023-02-10T09:30:00Z",
     updatedAt: "2023-04-13T11:20:00Z"
   },
@@ -60,7 +64,9 @@ export const alerts: Alert[] = [
     cost: 1.35,
     successRate: 60,
     failureCount: 2,
-    recipients: ["user1@example.com", "user4@example.com"],
+    recipients: {
+      email: ["user1@example.com", "user4@example.com"]
+    },
     createdAt: "2023-01-20T14:15:00Z",
     updatedAt: "2023-04-10T15:15:00Z"
   },
@@ -77,7 +83,9 @@ export const alerts: Alert[] = [
     cost: 2.16,
     successRate: 87.5,
     failureCount: 1,
-    recipients: ["user2@example.com", "user5@example.com"],
+    recipients: {
+      email: ["user2@example.com", "user5@example.com"]
+    },
     createdAt: "2023-03-01T11:00:00Z",
     updatedAt: "2023-04-14T09:10:00Z"
   },
@@ -94,7 +102,9 @@ export const alerts: Alert[] = [
     cost: 0.27,
     successRate: 100,
     failureCount: 0,
-    recipients: ["user1@example.com", "user6@example.com"],
+    recipients: {
+      email: ["user1@example.com", "user6@example.com"]
+    },
     createdAt: "2023-04-01T16:45:00Z",
     updatedAt: "2023-04-01T16:45:00Z"
   },
@@ -111,7 +121,9 @@ export const alerts: Alert[] = [
     cost: 0,
     successRate: 0,
     failureCount: 0,
-    recipients: ["user3@example.com"],
+    recipients: {
+      email: ["user3@example.com"]
+    },
     createdAt: "2023-04-05T10:20:00Z",
     updatedAt: "2023-04-05T10:20:00Z"
   }

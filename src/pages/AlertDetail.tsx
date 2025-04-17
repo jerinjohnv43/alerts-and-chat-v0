@@ -15,7 +15,9 @@ import {
   X,
   User,
   Plus,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Users
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/components/ui/use-toast';
-import { Alert } from '@/types/alerts';
+import { Alert, NotificationType } from '@/types/alerts';
 import {
   LineChart,
   Line,
@@ -55,6 +57,7 @@ import {
   Legend
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AlertDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -64,6 +67,7 @@ const AlertDetail = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editedAlert, setEditedAlert] = useState<Alert | null>(alert || null);
+  const [activeNotificationTab, setActiveNotificationTab] = useState<NotificationType>('email');
   
   if (!alert) {
     return (
@@ -81,8 +85,12 @@ const AlertDetail = () => {
   
   const history = alertHistory.filter(h => h.alertId === alert.id);
   
+  // Get recipient emails from the new structure
+  const emailRecipients = alert.recipients.email || [];
+  
+  // Find users that match the email recipients
   const alertRecipientUsers = users.filter(user => 
-    alert.recipients.includes(user.email)
+    emailRecipients.includes(user.email)
   );
   
   const handleToggleActive = () => {
@@ -260,36 +268,139 @@ const AlertDetail = () => {
                 </div>
                 
                 <div>
-                  <Label className="block mb-2">Recipients</Label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {editedAlert?.recipients.map((email, i) => (
-                      <Badge key={i} variant="secondary" className="flex gap-1 items-center">
-                        {email}
-                        <button className="ml-1 rounded-full w-4 h-4 bg-gray-300 flex items-center justify-center"
-                          onClick={() => {
-                            if (editedAlert) {
-                              const newRecipients = [...editedAlert.recipients];
-                              newRecipients.splice(i, 1);
-                              setEditedAlert({...editedAlert, recipients: newRecipients});
-                            }
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Add new recipient email" 
-                      className="max-w-xs"
-                      id="new-recipient"
-                    />
-                    <Button variant="outline" size="sm" type="button">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
+                  <Tabs value={activeNotificationTab} onValueChange={(value) => setActiveNotificationTab(value as NotificationType)}>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Recipients</Label>
+                      <TabsList>
+                        <TabsTrigger value="email" className="flex items-center">
+                          <Mail className="h-4 w-4 mr-1" />
+                          Email
+                        </TabsTrigger>
+                        <TabsTrigger value="whatsapp" className="flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          WhatsApp
+                        </TabsTrigger>
+                        <TabsTrigger value="teams" className="flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          Teams
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    
+                    <TabsContent value="email">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {editedAlert?.recipients.email?.map((email, i) => (
+                          <Badge key={i} variant="secondary" className="flex gap-1 items-center">
+                            {email}
+                            <button className="ml-1 rounded-full w-4 h-4 bg-gray-300 flex items-center justify-center"
+                              onClick={() => {
+                                if (editedAlert && editedAlert.recipients.email) {
+                                  const newEmails = [...editedAlert.recipients.email];
+                                  newEmails.splice(i, 1);
+                                  setEditedAlert({
+                                    ...editedAlert, 
+                                    recipients: {
+                                      ...editedAlert.recipients,
+                                      email: newEmails
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Add new recipient email" 
+                          className="max-w-xs"
+                          id="new-email-recipient"
+                        />
+                        <Button variant="outline" size="sm" type="button">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="whatsapp">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {editedAlert?.recipients.whatsapp?.map((number, i) => (
+                          <Badge key={i} variant="secondary" className="flex gap-1 items-center">
+                            {number}
+                            <button className="ml-1 rounded-full w-4 h-4 bg-gray-300 flex items-center justify-center"
+                              onClick={() => {
+                                if (editedAlert && editedAlert.recipients.whatsapp) {
+                                  const newNumbers = [...editedAlert.recipients.whatsapp];
+                                  newNumbers.splice(i, 1);
+                                  setEditedAlert({
+                                    ...editedAlert, 
+                                    recipients: {
+                                      ...editedAlert.recipients,
+                                      whatsapp: newNumbers
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Add WhatsApp number (with country code)" 
+                          className="max-w-xs"
+                          id="new-whatsapp-recipient"
+                        />
+                        <Button variant="outline" size="sm" type="button">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="teams">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {editedAlert?.recipients.teams?.map((userId, i) => (
+                          <Badge key={i} variant="secondary" className="flex gap-1 items-center">
+                            {users.find(u => u.id === userId)?.name || userId}
+                            <button className="ml-1 rounded-full w-4 h-4 bg-gray-300 flex items-center justify-center"
+                              onClick={() => {
+                                if (editedAlert && editedAlert.recipients.teams) {
+                                  const newTeamsUsers = [...editedAlert.recipients.teams];
+                                  newTeamsUsers.splice(i, 1);
+                                  setEditedAlert({
+                                    ...editedAlert, 
+                                    recipients: {
+                                      ...editedAlert.recipients,
+                                      teams: newTeamsUsers
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Add Teams user" 
+                          className="max-w-xs"
+                          id="new-teams-recipient"
+                        />
+                        <Button variant="outline" size="sm" type="button">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
             ) : (
@@ -334,13 +445,26 @@ const AlertDetail = () => {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Recipients</div>
-                    <div className="flex flex-wrap gap-1">
-                      {alert.recipients.map((email, i) => (
-                        <Badge key={i} variant="outline">
-                          {email}
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Notification Channels</div>
+                    <div className="flex gap-2">
+                      {alert.recipients.email && alert.recipients.email.length > 0 && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          Email ({alert.recipients.email.length})
                         </Badge>
-                      ))}
+                      )}
+                      {alert.recipients.whatsapp && alert.recipients.whatsapp.length > 0 && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          WhatsApp ({alert.recipients.whatsapp.length})
+                        </Badge>
+                      )}
+                      {alert.recipients.teams && alert.recipients.teams.length > 0 && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          Teams ({alert.recipients.teams.length})
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
