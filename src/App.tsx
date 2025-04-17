@@ -1,24 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-import { AppLayout } from "./components/layout/AppLayout";
-import Alerts from "./pages/Alerts";
-import AlertDetail from "./pages/AlertDetail";
-import CreateAlert from "./pages/CreateAlert";
-import Users from "./pages/Users";
-import Settings from "./pages/Settings";
-import Monitor from "./pages/Monitor";
-import History from "./pages/History";
-import Analytics from "./pages/Analytics";
-import NotFound from "./pages/NotFound";
-import OnboardingPage from "./pages/OnboardingPage";
-
-// Create a new QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -56,14 +42,10 @@ const App = () => {
               } 
             />
 
-            {/* Onboarding Route */}
+            {/* Onboarding Route - Allow direct access */}
             <Route 
               path="/onboarding" 
-              element={
-                isOnboarded ? 
-                <Navigate to="/alerts" replace /> : 
-                <OnboardingPage onComplete={completeOnboarding} />
-              } 
+              element={<OnboardingPage onComplete={completeOnboarding} />}
             />
             
             {/* Protected App Routes - redirects to onboarding if not completed */}
