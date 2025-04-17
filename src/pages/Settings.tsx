@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Bell,
   ShieldAlert,
@@ -32,8 +34,93 @@ import {
   Boxes
 } from 'lucide-react';
 
+// Email templates defined here to match those in the CreateAlert component
+const emailTemplates = [
+  { id: "standard", name: "Standard Alert", label: "Standard Alert Template" },
+  { id: "detailed", name: "Detailed Report", label: "Detailed Report Template" },
+  { id: "executive", name: "Executive Summary", label: "Executive Summary Template" },
+];
+
 const Settings = () => {
   const { toast } = useToast();
+  const [activeTemplate, setActiveTemplate] = useState("standard");
+  
+  // Default template content
+  const defaultTemplates = {
+    standard: `Dear {{recipient_name}},
+
+An alert has been triggered for the following report:
+Name: {{alert_name}}
+Report: {{report_name}}
+Time: {{trigger_time}}
+
+LLM Insights:
+{{llm_insights}}
+
+Click the link below to view the report:
+{{report_url}}
+
+Regards,
+Alert Insights Team`,
+    
+    detailed: `Dear {{recipient_name}},
+
+We've detected significant changes in your monitored metrics:
+
+Alert: {{alert_name}}
+Report: {{report_name}}
+Triggered: {{trigger_time}}
+
+DETAILED ANALYSIS:
+{{llm_insights}}
+
+KEY METRICS:
+- Current Value: {{current_value}}
+- Previous Value: {{previous_value}}
+- Change: {{change_percentage}}%
+
+DIMENSIONS AFFECTED:
+{{affected_dimensions}}
+
+For a comprehensive breakdown, please review the full report:
+{{report_url}}
+
+If you have any questions about this alert, please contact the data team.
+
+Best regards,
+Alert Insights Analytics Team`,
+    
+    executive: `EXECUTIVE SUMMARY
+
+ALERT: {{alert_name}}
+TIME: {{trigger_time}}
+
+BUSINESS IMPACT:
+{{llm_insights}}
+
+KEY TAKEAWAY:
+{{key_takeaway}}
+
+RECOMMENDED ACTION:
+{{recommended_action}}
+
+View full report: {{report_url}}
+
+Alert Insights Team`
+  };
+  
+  const [templates, setTemplates] = useState(defaultTemplates);
+  
+  const handleTemplateChange = (value: string) => {
+    setActiveTemplate(value);
+  };
+  
+  const handleTemplateContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTemplates({
+      ...templates,
+      [activeTemplate]: e.target.value
+    });
+  };
   
   const handleSaveSettings = () => {
     toast({
@@ -224,45 +311,63 @@ const Settings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Email Template
+                Email Templates
               </CardTitle>
               <CardDescription>
                 Customize the email templates used for notifications.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-subject">Email Subject</Label>
-                <Input 
-                  id="email-subject" 
-                  defaultValue="[Alert] {{alert_name}} has been triggered"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email-template">Email Template</Label>
-                <Textarea 
-                  id="email-template" 
-                  className="min-h-[150px]" 
-                  defaultValue={`Dear {{recipient_name}},
-
-An alert has been triggered for the following report:
-Name: {{alert_name}}
-Report: {{report_name}}
-Time: {{trigger_time}}
-
-LLM Insights:
-{{llm_insights}}
-
-Click the link below to view the report:
-{{report_url}}
-
-Regards,
-Alert Insights Team`}
-                />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Available variables: &#123;&#123;alert_name&#125;&#125;, &#123;&#123;report_name&#125;&#125;, &#123;&#123;trigger_time&#125;&#125;, &#123;&#123;recipient_name&#125;&#125;, &#123;&#123;llm_insights&#125;&#125;, &#123;&#123;report_url&#125;&#125;
-              </div>
+              <Tabs defaultValue="standard" value={activeTemplate} onValueChange={handleTemplateChange}>
+                <TabsList className="grid w-full grid-cols-3">
+                  {emailTemplates.map(template => (
+                    <TabsTrigger key={template.id} value={template.id}>
+                      {template.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {emailTemplates.map(template => (
+                  <TabsContent key={template.id} value={template.id}>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`email-subject-${template.id}`}>Email Subject</Label>
+                        <Input 
+                          id={`email-subject-${template.id}`} 
+                          defaultValue={`[Alert] {{alert_name}} - ${template.name}`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`email-template-${template.id}`}>{template.label}</Label>
+                        <Textarea 
+                          id={`email-template-${template.id}`} 
+                          className="min-h-[250px] font-mono text-sm" 
+                          value={templates[template.id as keyof typeof templates]}
+                          onChange={handleTemplateContentChange}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+                
+                <div className="text-sm text-muted-foreground mt-4">
+                  <p className="font-semibold mb-1">Available variables:</p>
+                  <div className="grid grid-cols-2 gap-y-1 gap-x-4">
+                    <span>&#123;&#123;alert_name&#125;&#125;</span>
+                    <span>&#123;&#123;report_name&#125;&#125;</span>
+                    <span>&#123;&#123;trigger_time&#125;&#125;</span>
+                    <span>&#123;&#123;recipient_name&#125;&#125;</span>
+                    <span>&#123;&#123;llm_insights&#125;&#125;</span>
+                    <span>&#123;&#123;report_url&#125;&#125;</span>
+                    <span>&#123;&#123;current_value&#125;&#125;</span>
+                    <span>&#123;&#123;previous_value&#125;&#125;</span>
+                    <span>&#123;&#123;change_percentage&#125;&#125;</span>
+                    <span>&#123;&#123;affected_dimensions&#125;&#125;</span>
+                    <span>&#123;&#123;key_takeaway&#125;&#125;</span>
+                    <span>&#123;&#123;recommended_action&#125;&#125;</span>
+                  </div>
+                </div>
+              </Tabs>
             </CardContent>
           </Card>
           
@@ -282,6 +387,14 @@ Alert Insights Team`}
                 <Input 
                   id="azure-endpoint" 
                   placeholder="https://your-resource.openai.azure.com/"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="azure-api-key">Azure OpenAI API Key</Label>
+                <Input 
+                  id="azure-api-key" 
+                  type="password"
+                  placeholder="Enter your Azure OpenAI API key"
                 />
               </div>
               <div className="space-y-2">
