@@ -10,7 +10,6 @@ import {
   Activity,
   AlertTriangle,
   History,
-  Home,
   X,
   User
 } from 'lucide-react';
@@ -68,7 +67,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-14 items-center border-b px-4 justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/alerts" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold">
               BI
             </div>
@@ -80,12 +79,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
-            <NavItem 
-              icon={Home} 
-              label="Dashboard" 
-              href="/" 
-              active={pathname === "/"} 
-            />
             <NavItem 
               icon={AlertTriangle} 
               label="Alerts" 

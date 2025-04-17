@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 import { AppLayout } from "./components/layout/AppLayout";
-import Dashboard from "./pages/Dashboard";
 import Alerts from "./pages/Alerts";
 import AlertDetail from "./pages/AlertDetail";
 import CreateAlert from "./pages/CreateAlert";
@@ -30,8 +29,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  // Simple state to check if a company has been onboarded
-  // In a real implementation, this would be fetched from an API or local storage
   const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
     const storedOnboardingState = localStorage.getItem('isOnboarded');
     return storedOnboardingState === 'true';
@@ -54,7 +51,7 @@ const App = () => {
               path="/onboarding" 
               element={
                 isOnboarded ? 
-                <Navigate to="/" replace /> : 
+                <Navigate to="/alerts" replace /> : 
                 <OnboardingPage onComplete={completeOnboarding} />
               } 
             />
@@ -67,7 +64,6 @@ const App = () => {
                 <Navigate to="/onboarding" replace />
               }
             >
-              <Route path="/" element={<Dashboard />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/alerts/create" element={<CreateAlert />} />
               <Route path="/alerts/:id" element={<AlertDetail />} />
