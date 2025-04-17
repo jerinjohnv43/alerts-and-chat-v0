@@ -274,39 +274,10 @@ Alert Insights Team`}
                 API Configuration
               </CardTitle>
               <CardDescription>
-                Configure Power BI and LLM API settings.
+                Configure API settings for your alert system.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="power-bi-api-key">Power BI API Key</Label>
-                <Input 
-                  id="power-bi-api-key" 
-                  type="password" 
-                  defaultValue="••••••••••••••••"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="llm-provider">LLM Provider</Label>
-                <Select defaultValue="azure">
-                  <SelectTrigger id="llm-provider">
-                    <SelectValue placeholder="Select a provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="openai">OpenAI</SelectItem>
-                    <SelectItem value="azure">Azure OpenAI</SelectItem>
-                    <SelectItem value="anthropic">Anthropic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="llm-api-key">LLM API Key</Label>
-                <Input 
-                  id="llm-api-key" 
-                  type="password" 
-                  defaultValue="••••••••••••••••"
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="azure-endpoint">Azure OpenAI Endpoint</Label>
                 <Input 
