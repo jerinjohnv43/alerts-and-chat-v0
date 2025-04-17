@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,8 @@ const statusDistributionData = [
 ];
 
 const Analytics = () => {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date | undefined }>({
+  // Update the type definition to match what Calendar component expects
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>({
     from: new Date(2023, 3, 1), // April 1, 2023
     to: new Date(2023, 3, 14), // April 14, 2023
   });
