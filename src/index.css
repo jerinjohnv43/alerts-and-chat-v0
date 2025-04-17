@@ -1,4 +1,8 @@
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer components {
   .glass-card {
     @apply bg-white/40 dark:bg-black/30 
