@@ -7,6 +7,7 @@ import { Alert, AlertFiltersType } from '@/types/alerts';
 import { alerts as mockAlerts } from '@/data/mockData';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Alerts = () => {
   const { toast } = useToast();
@@ -79,10 +80,12 @@ const Alerts = () => {
             Manage and monitor your Power BI alerts.
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Create Alert
-        </Button>
+        <Link to="/alerts/create">
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Alert
+          </Button>
+        </Link>
       </div>
       
       <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
