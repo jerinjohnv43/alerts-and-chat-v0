@@ -12,7 +12,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete }) => {
   
   const handleOnboardingComplete = () => {
     onComplete();
-    navigate('/', { replace: true });
+    navigate('/alerts', { replace: true }); // Changed from '/' to '/alerts'
   };
 
   return (
