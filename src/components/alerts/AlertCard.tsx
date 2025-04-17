@@ -32,7 +32,7 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
   };
   
   return (
-    <Card className="h-full transition-all hover:shadow-md">
+    <Card className="h-full transition-all hover:shadow-lg backdrop-blur-sm bg-white/40 dark:bg-black/20 border-white/20 dark:border-white/10">
       <CardHeader className="space-y-1">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{alert.name}</CardTitle>
