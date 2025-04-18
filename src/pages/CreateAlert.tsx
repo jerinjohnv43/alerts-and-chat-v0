@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -164,6 +163,7 @@ const CreateAlert = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeNotificationTab, setActiveNotificationTab] = useState<NotificationType>('email');
+  const [searchTeamsQuery, setSearchTeamsQuery] = useState("");
 
   const form = useForm<CreateAlertValues>({
     resolver: zodResolver(createAlertSchema),
@@ -288,6 +288,17 @@ const CreateAlert = () => {
     const datasetSelections = form.getValues("datasetSelections");
     return datasetSelections.find(ds => ds.datasetId === datasetId)?.selectedKpi || "";
   };
+
+  // Filter Teams users based on search query
+  const filteredTeamsUsers = useMemo(() => {
+    if (!searchTeamsQuery.trim()) return mockTeamsUsers;
+    
+    const query = searchTeamsQuery.toLowerCase();
+    return mockTeamsUsers.filter(user => 
+      user.name.toLowerCase().includes(query) || 
+      user.email.toLowerCase().includes(query)
+    );
+  }, [searchTeamsQuery]);
 
   // Handle notification channel toggle
   const handleNotificationToggle = (channel: NotificationType, checked: boolean) => {
@@ -742,28 +753,38 @@ const CreateAlert = () => {
                               <FormDescription className="mb-2">
                                 Select Microsoft Teams users to receive the alerts.
                               </FormDescription>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {mockTeamsUsers.map((user) => (
-                                  <div key={user.id} className="flex items-center space-x-2 rounded-md border p-2">
-                                    <Checkbox 
-                                      id={`teams-user-${user.id}`} 
-                                      checked={isTeamsUserSelected(user.id)}
-                                      onCheckedChange={(checked) => 
-                                        handleTeamsUserToggle(user.id, checked === true)
-                                      }
-                                      disabled={!form.getValues("notificationChannels.teams")}
-                                    />
-                                    <label 
-                                      htmlFor={`teams-user-${user.id}`}
-                                      className="flex flex-col cursor-pointer"
-                                    >
-                                      <span className="text-sm font-medium">{user.name}</span>
-                                      <span className="text-xs text-muted-foreground">{user.email}</span>
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                              <FormMessage />
+                              <div className="space-y-4">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                  <Input
+                                    placeholder="Search users..."
+                                    value={searchTeamsQuery}
+                                    onChange={(e) => setSearchTeamsQuery(e.target.value)}
+                                    className="pl-9"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
+                                  {filteredTeamsUsers.map((user) => (
+                                    <div key={user.id} className="flex items-center space-x-2 rounded-md border p-2">
+                                      <Checkbox 
+                                        id={`teams-user-${user.id}`} 
+                                        checked={isTeamsUserSelected(user.id)}
+                                        onCheckedChange={(checked) => 
+                                          handleTeamsUserToggle(user.id, checked === true)
+                                        }
+                                        disabled={!form.getValues("notificationChannels.teams")}
+                                      />
+                                      <label 
+                                        htmlFor={`teams-user-${user.id}`}
+                                        className="flex flex-col cursor-pointer"
+                                      >
+                                        <span className="text-sm font-medium">{user.name}</span>
+                                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </FormMessage />
                             </FormItem>
                           )}
                         />
