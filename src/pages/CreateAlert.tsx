@@ -12,7 +12,8 @@ import {
   Bot, 
   MessageSquare,
   Users,
-  Check 
+  Check,
+  Search 
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -784,7 +785,8 @@ const CreateAlert = () => {
                                     </div>
                                   ))}
                                 </div>
-                              </FormMessage />
+                              </div>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
