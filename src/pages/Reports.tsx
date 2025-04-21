@@ -4,9 +4,7 @@ import {
   FileText, 
   Search, 
   Filter, 
-  MoreHorizontal, 
-  Folder,
-  MoveHorizontal
+  Folder
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +16,6 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { mockReports, mockWorkspaces } from '@/data/mockPowerBIData';
 import { format } from 'date-fns';
 import ReportActionsMenu from "./Reports/components/ReportActionsMenu";
@@ -93,10 +83,6 @@ const Reports = () => {
           <Filter className="h-4 w-4" />
           Filter
         </Button>
-        <Button className="flex items-center gap-2">
-          <MoveHorizontal className="h-4 w-4" />
-          Move Reports
-        </Button>
       </div>
       
       <div className="rounded-md border">
@@ -143,7 +129,6 @@ const Reports = () => {
                   <ReportActionsMenu
                     report={report}
                     onDelete={handleDelete}
-                    onMove={handleMove}
                   />
                 </TableCell>
               </TableRow>
