@@ -5,7 +5,6 @@ import {
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
@@ -172,7 +171,8 @@ const Workspaces = () => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={workspace.state === 'active' ? 'success' : 'destructive'}>
+                  <Badge variant={workspace.state === 'active' ? 'default' : 'destructive'} 
+                         className={workspace.state === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}>
                     {workspace.state}
                   </Badge>
                 </TableCell>
