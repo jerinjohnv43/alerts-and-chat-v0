@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -29,22 +28,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { mockReports, mockWorkspaces } from '@/data/mockPowerBIData';
 import { format } from 'date-fns';
+import ReportActionsMenu from "./Reports/components/ReportActionsMenu";
 
 const Reports = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  
+  const [reports, setReports] = useState(mockReports);
+
   // Combine report data with workspace information
-  const reportData = mockReports.map(report => {
+  const reportData = reports.map(report => {
     const workspace = mockWorkspaces.find(w => w.id === report.workspaceId);
     return {
       ...report,
       workspaceName: workspace?.name || 'Unknown'
     };
   });
-  
+
   const filteredReports = reportData.filter(report => {
     if (!searchTerm) return true;
-    
     const searchLower = searchTerm.toLowerCase();
     return (
       report.name.toLowerCase().includes(searchLower) ||
@@ -52,7 +52,21 @@ const Reports = () => {
       report.workspaceName.toLowerCase().includes(searchLower)
     );
   });
-  
+
+  // Handle Delete/Move actions
+  const handleDelete = (reportId: string) => {
+    setReports(reports => reports.filter(r => r.id !== reportId));
+  };
+  const handleMove = (reportId: string, newWorkspaceId: string) => {
+    setReports(reports =>
+      reports.map(r =>
+        r.id === reportId
+          ? { ...r, workspaceId: newWorkspaceId }
+          : r
+      )
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -126,26 +140,11 @@ const Reports = () => {
                   }
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <a href={report.webUrl} target="_blank" rel="noopener noreferrer" className="flex w-full">
-                          View Report
-                        </a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Manage Access</DropdownMenuItem>
-                      <DropdownMenuItem>Move Report</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">Delete Report</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ReportActionsMenu
+                    report={report}
+                    onDelete={handleDelete}
+                    onMove={handleMove}
+                  />
                 </TableCell>
               </TableRow>
             ))}
