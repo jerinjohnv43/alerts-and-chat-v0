@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Database, 
@@ -14,6 +13,7 @@ import {
   ExternalLink,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Info
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,21 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+
+const mockFabricWorkspaces = [
+  { id: "fw1", name: "Finance Data Warehouse" },
+  { id: "fw2", name: "Sales Analytics DW" },
+  { id: "fw3", name: "Marketing Insights WH" },
+  { id: "fw4", name: "HR Analytics Zone" },
+];
+const mockFabricWarehouses = [
+  { id: "wh1", name: "Main DWH", workspaceId: "fw1" },
+  { id: "wh2", name: "Dev QA DWH", workspaceId: "fw1" },
+  { id: "wh3", name: "Sales Mart", workspaceId: "fw2" },
+  { id: "wh4", name: "Marketing DataLake", workspaceId: "fw3" },
+  { id: "wh5", name: "Org HR DWH", workspaceId: "fw4" },
+];
 
 const DataCatalog = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,8 +80,9 @@ const DataCatalog = () => {
   const [selectedDataSource, setSelectedDataSource] = useState<any>(null);
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [isAddConnectionOpen, setIsAddConnectionOpen] = useState(false);
-  
-  // Mock data for tables and views
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(null);
+
   const mockTables = [
     {
       id: "table1",
@@ -130,8 +146,7 @@ const DataCatalog = () => {
       ]
     },
   ];
-  
-  // Combine data sources with their report usage
+
   const enrichedDataSources = mockDataSources.map(dataSource => {
     const reportsUsingSource = dataSource.reports.map(reportId => 
       mockReports.find(report => report.id === reportId)
@@ -140,10 +155,10 @@ const DataCatalog = () => {
     return {
       ...dataSource,
       reportsDetail: reportsUsingSource,
-      tables: mockTables, // Add mock tables to each data source
+      tables: mockTables,
     };
   });
-  
+
   const filteredDataSources = enrichedDataSources.filter(ds => {
     if (!searchTerm) return true;
     
@@ -155,22 +170,19 @@ const DataCatalog = () => {
       ds.database.toLowerCase().includes(searchLower)
     );
   });
-  
+
   const serverTypes = Array.from(new Set(mockDataSources.map(ds => ds.type)));
-  
-  // Function to handle table selection
+
   const handleTableSelect = (table: any) => {
     setSelectedTable(table);
     setActiveView('table-detail');
   };
-  
-  // Function to handle data source selection
+
   const handleDataSourceSelect = (dataSource: any) => {
     setSelectedDataSource(dataSource);
     setActiveView('tables');
   };
-  
-  // Function to handle back navigation
+
   const handleBack = () => {
     if (activeView === 'table-detail') {
       setActiveView('tables');
@@ -179,8 +191,7 @@ const DataCatalog = () => {
       setSelectedDataSource(null);
     }
   };
-  
-  // Function to update table description
+
   const handleTableDescriptionUpdate = (description: string) => {
     if (selectedTable) {
       setSelectedTable({
@@ -189,8 +200,7 @@ const DataCatalog = () => {
       });
     }
   };
-  
-  // Function to update column description
+
   const handleColumnDescriptionUpdate = (columnName: string, description: string) => {
     if (selectedTable) {
       const updatedColumns = selectedTable.columns.map((column: any) => {
@@ -206,10 +216,9 @@ const DataCatalog = () => {
       });
     }
   };
-  
+
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold mb-2">Data Catalog</h1>
@@ -222,8 +231,7 @@ const DataCatalog = () => {
           Connect Data Source
         </Button>
       </div>
-      
-      {/* Breadcrumb Navigation */}
+
       {activeView !== 'data-sources' && (
         <div className="flex items-center text-sm text-muted-foreground">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 p-0 h-auto" onClick={handleBack}>
@@ -250,8 +258,7 @@ const DataCatalog = () => {
           )}
         </div>
       )}
-      
-      {/* Search and Filter Bar */}
+
       {activeView === 'data-sources' && (
         <div className="flex items-center gap-4">
           <div className="relative flex-grow max-w-md">
@@ -270,8 +277,7 @@ const DataCatalog = () => {
           </Button>
         </div>
       )}
-      
-      {/* Summary Cards for Data Sources View */}
+
       {activeView === 'data-sources' && (
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
@@ -310,8 +316,7 @@ const DataCatalog = () => {
           </Card>
         </div>
       )}
-      
-      {/* Data Sources List View */}
+
       {activeView === 'data-sources' && (
         <div className="rounded-md border">
           <Table>
@@ -377,8 +382,7 @@ const DataCatalog = () => {
           </Table>
         </div>
       )}
-      
-      {/* Tables & Views List */}
+
       {activeView === 'tables' && selectedDataSource && (
         <>
           <div className="flex justify-between items-center">
@@ -475,8 +479,7 @@ const DataCatalog = () => {
           </Tabs>
         </>
       )}
-      
-      {/* Table/View Detail View */}
+
       {activeView === 'table-detail' && selectedTable && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
@@ -571,8 +574,7 @@ const DataCatalog = () => {
           </div>
         </div>
       )}
-      
-      {/* Add Connection Dialog */}
+
       <Dialog open={isAddConnectionOpen} onOpenChange={setIsAddConnectionOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -600,17 +602,54 @@ const DataCatalog = () => {
             
             <div className="space-y-2">
               <Label htmlFor="workspace">Fabric Workspace</Label>
-              <Input id="workspace" placeholder="Select workspace" />
+              <Select
+                value={selectedWorkspace ?? ""}
+                onValueChange={(value) => {
+                  setSelectedWorkspace(value);
+                  if (selectedWarehouse && !mockFabricWarehouses.some(wh => wh.id === selectedWarehouse && wh.workspaceId === value)) {
+                    setSelectedWarehouse(null);
+                  }
+                }}
+              >
+                <SelectTrigger id="workspace" aria-label="Select workspace" className="w-full">
+                  <SelectValue placeholder="Select workspace" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[100] bg-background">
+                  {mockFabricWorkspaces.map(ws => (
+                    <SelectItem value={ws.id} key={ws.id}>{ws.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="warehouse">Data Warehouse</Label>
-              <Input id="warehouse" placeholder="Select warehouse" />
+              <Select
+                value={selectedWarehouse ?? ""}
+                onValueChange={setSelectedWarehouse}
+                disabled={!selectedWorkspace}
+              >
+                <SelectTrigger id="warehouse" aria-label="Select warehouse" className="w-full">
+                  <SelectValue placeholder={!selectedWorkspace ? "Select workspace first" : "Select warehouse"} />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[100] bg-background">
+                  {(selectedWorkspace
+                    ? mockFabricWarehouses.filter(wh => wh.workspaceId === selectedWorkspace)
+                    : []
+                  ).map(wh => (
+                    <SelectItem value={wh.id} key={wh.id}>{wh.name}</SelectItem>
+                  ))}
+                  {selectedWorkspace &&
+                    mockFabricWarehouses.filter(wh => wh.workspaceId === selectedWorkspace).length === 0 && (
+                    <div className="px-4 py-2 text-sm text-muted-foreground italic">No warehouses found</div>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddConnectionOpen(false)}>Cancel</Button>
-            <Button type="submit">Connect</Button>
+            <Button type="submit" disabled={!selectedWorkspace || !selectedWarehouse}>Connect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
