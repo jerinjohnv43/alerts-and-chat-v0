@@ -48,3 +48,27 @@ export interface DataSource {
   gateway?: string;
   reports: string[]; // Array of report IDs that use this data source
 }
+
+// New interfaces for data catalog functionality
+export interface TableColumn {
+  name: string;
+  type: string;
+  description?: string;
+  isNullable?: boolean;
+  isPrimaryKey?: boolean;
+  isForeignKey?: boolean;
+  referencesTable?: string;
+  referencesColumn?: string;
+}
+
+export interface DatabaseTable {
+  id: string;
+  name: string;
+  type: 'Table' | 'View';
+  schema: string;
+  description?: string;
+  columns: TableColumn[];
+  rowCount?: number;
+  lastUpdated?: string;
+  tags?: string[];
+}
