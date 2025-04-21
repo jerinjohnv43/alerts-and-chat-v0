@@ -59,6 +59,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import WorkspaceWarehouseSelector from "./DataCatalog/components/WorkspaceWarehouseSelector";
 
 const mockFabricWorkspaces = [
   { id: "fw1", name: "Finance Data Warehouse" },
@@ -599,53 +600,14 @@ const DataCatalog = () => {
                 </Button>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="workspace">Fabric Workspace</Label>
-              <Select
-                value={selectedWorkspace ?? ""}
-                onValueChange={(value) => {
-                  setSelectedWorkspace(value);
-                  if (selectedWarehouse && !mockFabricWarehouses.some(wh => wh.id === selectedWarehouse && wh.workspaceId === value)) {
-                    setSelectedWarehouse(null);
-                  }
-                }}
-              >
-                <SelectTrigger id="workspace" aria-label="Select workspace" className="w-full">
-                  <SelectValue placeholder="Select workspace" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="z-[100] bg-background">
-                  {mockFabricWorkspaces.map(ws => (
-                    <SelectItem value={ws.id} key={ws.id}>{ws.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="warehouse">Data Warehouse</Label>
-              <Select
-                value={selectedWarehouse ?? ""}
-                onValueChange={setSelectedWarehouse}
-                disabled={!selectedWorkspace}
-              >
-                <SelectTrigger id="warehouse" aria-label="Select warehouse" className="w-full">
-                  <SelectValue placeholder={!selectedWorkspace ? "Select workspace first" : "Select warehouse"} />
-                </SelectTrigger>
-                <SelectContent position="popper" className="z-[100] bg-background">
-                  {(selectedWorkspace
-                    ? mockFabricWarehouses.filter(wh => wh.workspaceId === selectedWorkspace)
-                    : []
-                  ).map(wh => (
-                    <SelectItem value={wh.id} key={wh.id}>{wh.name}</SelectItem>
-                  ))}
-                  {selectedWorkspace &&
-                    mockFabricWarehouses.filter(wh => wh.workspaceId === selectedWorkspace).length === 0 && (
-                    <div className="px-4 py-2 text-sm text-muted-foreground italic">No warehouses found</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <WorkspaceWarehouseSelector
+              workspaces={mockFabricWorkspaces}
+              warehouses={mockFabricWarehouses}
+              selectedWorkspace={selectedWorkspace}
+              selectedWarehouse={selectedWarehouse}
+              setSelectedWorkspace={setSelectedWorkspace}
+              setSelectedWarehouse={setSelectedWarehouse}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddConnectionOpen(false)}>Cancel</Button>
