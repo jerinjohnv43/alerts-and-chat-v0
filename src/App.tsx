@@ -16,6 +16,11 @@ import Settings from "./pages/Settings";
 import Monitor from "./pages/Monitor";
 import History from "./pages/History";
 import Analytics from "./pages/Analytics";
+import Workspaces from "./pages/Workspaces";
+import WorkspaceDetail from "./pages/WorkspaceDetail";
+import Reports from "./pages/Reports";
+import ReportMigration from "./pages/ReportMigration";
+import DataCatalog from "./pages/DataCatalog";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
 
@@ -70,14 +75,24 @@ const App = () => {
                 <Navigate to="/onboarding" replace />
               }
             >
+              {/* Alert Routes */}
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/alerts/create" element={<CreateAlert />} />
               <Route path="/alerts/:id" element={<AlertDetail />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/settings" element={<Settings />} />
               <Route path="/monitor" element={<Monitor />} />
               <Route path="/history" element={<History />} />
               <Route path="/analytics" element={<Analytics />} />
+              
+              {/* Power BI Routes */}
+              <Route path="/workspaces" element={<Workspaces />} />
+              <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/report-migration" element={<ReportMigration />} />
+              <Route path="/data-catalog" element={<DataCatalog />} />
+              
+              {/* Admin Routes */}
+              <Route path="/users" element={<Users />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Handle 404 routes */}

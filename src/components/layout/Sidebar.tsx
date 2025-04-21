@@ -11,7 +11,12 @@ import {
   AlertTriangle,
   History,
   X,
-  User
+  User,
+  Database,
+  FileText,
+  Folder,
+  FolderOpen,
+  MoveHorizontal
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,50 +76,91 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold">
               BI
             </div>
-            <span className="text-lg font-semibold">Alert Insights</span>
+            <span className="text-lg font-semibold">BI Admin Portal</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
           </Button>
         </div>
         <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-1">
-            <NavItem 
-              icon={AlertTriangle} 
-              label="Alerts" 
-              href="/alerts" 
-              active={pathname === "/alerts" || pathname.startsWith("/alerts/")} 
-            />
-            <NavItem 
-              icon={Activity} 
-              label="Monitor" 
-              href="/monitor" 
-              active={pathname === "/monitor"} 
-            />
-            <NavItem 
-              icon={History} 
-              label="History" 
-              href="/history" 
-              active={pathname === "/history"} 
-            />
-            <NavItem 
-              icon={BarChart3} 
-              label="Analytics" 
-              href="/analytics" 
-              active={pathname === "/analytics"} 
-            />
-            <NavItem 
-              icon={Users} 
-              label="User Management" 
-              href="/users" 
-              active={pathname === "/users"} 
-            />
-            <NavItem 
-              icon={Settings} 
-              label="Settings" 
-              href="/settings" 
-              active={pathname === "/settings"} 
-            />
+          <nav className="space-y-6">
+            <div className="space-y-1">
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Alerts
+              </h3>
+              <NavItem 
+                icon={AlertTriangle} 
+                label="Alerts" 
+                href="/alerts" 
+                active={pathname === "/alerts" || pathname.startsWith("/alerts/")} 
+              />
+              <NavItem 
+                icon={Activity} 
+                label="Monitor" 
+                href="/monitor" 
+                active={pathname === "/monitor"} 
+              />
+              <NavItem 
+                icon={History} 
+                label="History" 
+                href="/history" 
+                active={pathname === "/history"} 
+              />
+              <NavItem 
+                icon={BarChart3} 
+                label="Analytics" 
+                href="/analytics" 
+                active={pathname === "/analytics"} 
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Power BI
+              </h3>
+              <NavItem 
+                icon={Folder} 
+                label="Workspaces" 
+                href="/workspaces" 
+                active={pathname === "/workspaces" || pathname.startsWith("/workspaces/")} 
+              />
+              <NavItem 
+                icon={FileText} 
+                label="Reports" 
+                href="/reports" 
+                active={pathname === "/reports"} 
+              />
+              <NavItem 
+                icon={MoveHorizontal} 
+                label="Report Migration" 
+                href="/report-migration" 
+                active={pathname === "/report-migration"} 
+              />
+              <NavItem 
+                icon={Database} 
+                label="Data Catalog" 
+                href="/data-catalog" 
+                active={pathname === "/data-catalog"} 
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Administration
+              </h3>
+              <NavItem 
+                icon={Users} 
+                label="User Management" 
+                href="/users" 
+                active={pathname === "/users"} 
+              />
+              <NavItem 
+                icon={Settings} 
+                label="Settings" 
+                href="/settings" 
+                active={pathname === "/settings"} 
+              />
+            </div>
           </nav>
         </ScrollArea>
         <div className="border-t p-4">

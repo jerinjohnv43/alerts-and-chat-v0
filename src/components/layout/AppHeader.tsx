@@ -43,9 +43,9 @@ export function AppHeader({ toggleSidebar }: AppHeaderProps) {
         <div className="flex items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-gradient-to-r from-primary-600 to-primary-500 flex items-center justify-center text-white font-bold shadow-sm">
-              AI
+              BI
             </div>
-            <h1 className="text-xl font-semibold hidden md:block gradient-heading">Alert Insights</h1>
+            <h1 className="text-xl font-semibold hidden md:block gradient-heading">BI Admin Portal</h1>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AppHeader({ toggleSidebar }: AppHeaderProps) {
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search alerts, users, or settings..."
+          placeholder="Search alerts, users, workspaces or reports..."
           className="pl-8 w-full bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"
         />
       </div>
