@@ -1,98 +1,87 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCard } from '@/components/alerts/AlertCard';
 import { AlertFilters } from '@/components/alerts/AlertFilters';
-import { mockAlerts } from '@/data/mockData';
-import { Alert } from '@/types/alerts';
+import { alerts } from '@/data/mockData';
+import { Alert, AlertFiltersType } from '@/types/alerts';
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 const Alerts: React.FC = () => {
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
-  const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>(mockAlerts);
+  const [allAlerts, setAllAlerts] = useState<Alert[]>(alerts);
+  const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>(alerts);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<AlertFiltersType>({
+    search: '',
+    statuses: [],
+    active: null,
+    sortBy: 'name',
+    sortOrder: 'asc'
+  });
 
-  const handleFilterChange = (filters: {
-    status: string;
-    severity: string;
-    dateRange: string;
-  }) => {
-    let filtered = alerts;
+  // Real-time search functionality
+  useEffect(() => {
+    let filtered = allAlerts;
 
     // Apply search filter
     if (searchTerm.trim()) {
       filtered = filtered.filter(alert => 
-        alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        alert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         alert.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        alert.metric.toLowerCase().includes(searchTerm.toLowerCase())
+        alert.reportName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Apply status filter
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(alert => alert.status === filters.status);
+    // Apply status filters
+    if (filters.statuses && filters.statuses.length > 0) {
+      filtered = filtered.filter(alert => filters.statuses!.includes(alert.status));
     }
 
-    // Apply severity filter
-    if (filters.severity !== 'all') {
-      filtered = filtered.filter(alert => alert.severity === filters.severity);
+    // Apply active filter
+    if (filters.active !== null) {
+      filtered = filtered.filter(alert => alert.active === filters.active);
     }
 
-    // Apply date range filter
-    if (filters.dateRange !== 'all') {
-      const now = new Date();
-      const filterDate = new Date();
-      
-      switch (filters.dateRange) {
-        case 'today':
-          filterDate.setHours(0, 0, 0, 0);
-          break;
-        case 'week':
-          filterDate.setDate(now.getDate() - 7);
-          break;
-        case 'month':
-          filterDate.setMonth(now.getMonth() - 1);
-          break;
-      }
-      
-      filtered = filtered.filter(alert => new Date(alert.createdAt) >= filterDate);
+    // Apply sorting
+    if (filters.sortBy) {
+      filtered.sort((a, b) => {
+        let aValue: any = a[filters.sortBy as keyof Alert];
+        let bValue: any = b[filters.sortBy as keyof Alert];
+        
+        if (filters.sortOrder === 'desc') {
+          [aValue, bValue] = [bValue, aValue];
+        }
+        
+        if (typeof aValue === 'string') {
+          return aValue.localeCompare(bValue);
+        }
+        
+        return aValue - bValue;
+      });
     }
 
     setFilteredAlerts(filtered);
+  }, [searchTerm, filters, allAlerts]);
+
+  const handleFilterChange = (newFilters: AlertFiltersType) => {
+    setFilters(newFilters);
+    if (newFilters.search !== undefined) {
+      setSearchTerm(newFilters.search);
+    }
   };
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    
-    // Filter alerts based on search term
-    let filtered = alerts;
-    
-    if (value.trim()) {
-      filtered = filtered.filter(alert => 
-        alert.title.toLowerCase().includes(value.toLowerCase()) ||
-        alert.description.toLowerCase().includes(value.toLowerCase()) ||
-        alert.metric.toLowerCase().includes(value.toLowerCase())
-      );
-    }
-    
-    setFilteredAlerts(filtered);
+    setFilters(prev => ({ ...prev, search: value }));
   };
 
-  const handleResolveAlert = (alertId: string) => {
-    const updatedAlerts = alerts.map(alert => 
+  const handleToggleActive = (alertId: string, active: boolean) => {
+    const updatedAlerts = allAlerts.map(alert => 
       alert.id === alertId 
-        ? { ...alert, status: 'resolved' as const }
+        ? { ...alert, active }
         : alert
     );
-    setAlerts(updatedAlerts);
-    
-    // Re-apply current filters
-    const currentFilters = {
-      status: 'all',
-      severity: 'all', 
-      dateRange: 'all'
-    };
-    handleFilterChange(currentFilters);
+    setAllAlerts(updatedAlerts);
   };
 
   return (
@@ -116,7 +105,7 @@ const Alerts: React.FC = () => {
         </div>
       </div>
       
-      <AlertFilters onFilterChange={handleFilterChange} />
+      <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
       
       <div className="grid grid-cols-1 gap-4">
         {filteredAlerts.length > 0 ? (
@@ -124,7 +113,7 @@ const Alerts: React.FC = () => {
             <AlertCard 
               key={alert.id} 
               alert={alert} 
-              onResolve={handleResolveAlert}
+              onToggleActive={handleToggleActive}
             />
           ))
         ) : (
