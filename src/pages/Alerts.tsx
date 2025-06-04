@@ -111,6 +111,7 @@ const Alerts: React.FC = () => {
             className="pl-8"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
+            data-lov-id="src/pages/Alerts.tsx:108:10"
           />
         </div>
       </div>

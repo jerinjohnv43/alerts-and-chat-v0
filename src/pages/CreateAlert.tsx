@@ -1,815 +1,279 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { 
-  AlertTriangle, 
-  ArrowLeft, 
-  Bell, 
-  Database, 
-  Mail, 
-  Bot, 
-  MessageSquare,
-  Users,
-  Check,
-  Search 
-} from 'lucide-react';
-
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NotificationType } from '@/types/alerts';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-// Dataset definitions with their associated KPIs and dimensions
-const datasetsConfig = {
-  sales_data: {
-    id: "sales_data",
-    name: "Sales Data",
-    kpis: ["revenue", "conversion_rate"],
-    dimensions: ["time", "product", "customer_segment", "channel"]
-  },
-  marketing_data: {
-    id: "marketing_data",
-    name: "Marketing Data",
-    kpis: ["conversion_rate", "customer_acquisition"],
-    dimensions: ["time", "geography", "channel"]
-  },
-  finance_data: {
-    id: "finance_data",
-    name: "Financial Data",
-    kpis: ["revenue", "churn_rate"],
-    dimensions: ["time", "product"]
-  },
-  operations_data: {
-    id: "operations_data",
-    name: "Operations Data",
-    kpis: ["churn_rate"],
-    dimensions: ["time", "geography", "customer_segment"]
-  }
-};
-
-// Dataset array for rendering
-const datasets = Object.values(datasetsConfig);
-
-// KPI definitions
-const kpiConfig = {
-  revenue: { name: "Revenue" },
-  conversion_rate: { name: "Conversion Rate" },
-  customer_acquisition: { name: "Customer Acquisition" },
-  churn_rate: { name: "Churn Rate" }
-};
-
-// Dimension definitions
-const dimensionsConfig = {
-  time: { name: "Time" },
-  geography: { name: "Geography" },
-  product: { name: "Product" },
-  customer_segment: { name: "Customer Segment" },
-  channel: { name: "Channel" }
-};
-
-const emailTemplates = [
-  { id: "standard", name: "Standard Alert" },
-  { id: "detailed", name: "Detailed Report" },
-  { id: "executive", name: "Executive Summary" },
-];
-
-// Mock MS Teams users for selection
-const mockTeamsUsers = [
-  { id: "user1", email: "user1@example.com", name: "John Doe" },
-  { id: "user2", email: "user2@example.com", name: "Jane Smith" },
-  { id: "user3", email: "user3@example.com", name: "Robert Johnson" },
-  { id: "user4", email: "user4@example.com", name: "Emily Davis" },
-];
-
-// Form schema with nested structure for datasets and recipients
-const createAlertSchema = z.object({
-  name: z.string().min(3, { message: "Alert name must be at least 3 characters." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  datasetSelections: z.array(z.object({
-    datasetId: z.string(),
-    selectedKpi: z.string().optional(),
-    selectedDimensions: z.array(z.string()).min(1, { message: "Select at least one dimension." }).optional(),
-  })).min(1, { message: "Select at least one dataset with KPI and dimensions." }),
-  emailTemplate: z.string({ required_error: "Please select an email template." }),
-  systemPrompt: z.string().optional(),
-  notificationChannels: z.object({
-    email: z.boolean(),
-    whatsapp: z.boolean(),
-    teams: z.boolean(),
-  }),
-  recipients: z.object({
-    email: z.string().optional(),
-    whatsapp: z.string().optional(),
-    teams: z.array(z.string()).optional(),
-  }),
-  active: z.boolean().default(true),
-}).refine(data => {
-  // Check if at least one dataset has both KPI and dimensions
-  return data.datasetSelections.some(
-    ds => ds.selectedKpi && ds.selectedDimensions && ds.selectedDimensions.length > 0
-  );
-}, {
-  message: "At least one dataset must have both KPI and dimensions selected",
-  path: ["datasetSelections"],
-}).refine(data => {
-  // Check if at least one notification channel is selected
-  return data.notificationChannels.email || 
-         data.notificationChannels.whatsapp || 
-         data.notificationChannels.teams;
-}, {
-  message: "At least one notification channel must be selected",
-  path: ["notificationChannels"],
-}).refine(data => {
-  // Check that email recipients are provided if email channel is selected
-  if (data.notificationChannels.email && (!data.recipients.email || data.recipients.email.trim() === '')) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Email recipients are required when email notifications are enabled",
-  path: ["recipients", "email"]
-}).refine(data => {
-  // Check that WhatsApp recipients are provided if WhatsApp channel is selected
-  if (data.notificationChannels.whatsapp && (!data.recipients.whatsapp || data.recipients.whatsapp.trim() === '')) {
-    return false;
-  }
-  return true;
-}, {
-  message: "WhatsApp recipients are required when WhatsApp notifications are enabled",
-  path: ["recipients", "whatsapp"]
-}).refine(data => {
-  // Check that MS Teams recipients are provided if Teams channel is selected
-  if (data.notificationChannels.teams && (!data.recipients.teams || data.recipients.teams.length === 0)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "MS Teams recipients are required when MS Teams notifications are enabled",
-  path: ["recipients", "teams"]
-});
-
-type CreateAlertValues = z.infer<typeof createAlertSchema>;
-
-const CreateAlert = () => {
-  const { toast } = useToast();
+const CreateAlert: React.FC = () => {
   const navigate = useNavigate();
-  const [activeNotificationTab, setActiveNotificationTab] = useState<NotificationType>('email');
-  const [searchTeamsQuery, setSearchTeamsQuery] = useState("");
-
-  const form = useForm<CreateAlertValues>({
-    resolver: zodResolver(createAlertSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      datasetSelections: [],
-      emailTemplate: "",
-      systemPrompt: "",
-      notificationChannels: {
-        email: true,
-        whatsapp: false,
-        teams: false,
-      },
-      recipients: {
-        email: "",
-        whatsapp: "",
-        teams: [],
-      },
-      active: true,
-    },
-  });
-
-  // Selected datasets state
-  const [selectedDatasetIds, setSelectedDatasetIds] = useState<string[]>([]);
+  const { toast } = useToast();
   
-  // Add or remove dataset from selections
-  const handleDatasetToggle = (datasetId: string, checked: boolean) => {
-    const currentSelections = form.getValues("datasetSelections");
+  // Form state
+  const [alertName, setAlertName] = useState('');
+  const [alertDescription, setAlertDescription] = useState('');
+  const [isActive, setIsActive] = useState('active');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [frequencyType, setFrequencyType] = useState('');
+  const [frequencyValue, setFrequencyValue] = useState('');
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [workspaceId, setWorkspaceId] = useState('');
+  const [datasetId, setDatasetId] = useState('');
+  const [daxQuery, setDaxQuery] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (checked) {
-      // Add the dataset if it doesn't already exist
-      if (!currentSelections.find(ds => ds.datasetId === datasetId)) {
-        form.setValue("datasetSelections", [
-          ...currentSelections,
-          { datasetId, selectedKpi: undefined, selectedDimensions: [] }
-        ]);
-        setSelectedDatasetIds(prev => [...prev, datasetId]);
-      }
-    } else {
-      // Remove the dataset if it exists
-      form.setValue("datasetSelections", 
-        currentSelections.filter(ds => ds.datasetId !== datasetId)
-      );
-      setSelectedDatasetIds(prev => prev.filter(id => id !== datasetId));
+    // Basic validation
+    if (!alertName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Alert name is required",
+        variant: "destructive"
+      });
+      return;
     }
-  };
 
-  // Check if a dataset is selected
-  const isDatasetSelected = (datasetId: string) => {
-    return selectedDatasetIds.includes(datasetId);
-  }
-  
-  // Update KPI for a dataset
-  const handleKpiChange = (datasetId: string, kpi: string) => {
-    const currentSelections = form.getValues("datasetSelections");
-    const updatedSelections = currentSelections.map(ds => 
-      ds.datasetId === datasetId 
-        ? { ...ds, selectedKpi: kpi } 
-        : ds
-    );
-    form.setValue("datasetSelections", updatedSelections);
-  };
-
-  // Update dimensions for a dataset
-  const handleDimensionToggle = (datasetId: string, dimension: string, checked: boolean) => {
-    const currentSelections = form.getValues("datasetSelections");
-    const datasetIndex = currentSelections.findIndex(ds => ds.datasetId === datasetId);
-    
-    if (datasetIndex !== -1) {
-      const currentDimensions = currentSelections[datasetIndex].selectedDimensions || [];
-      let newDimensions;
-      
-      if (checked) {
-        // Add dimension
-        newDimensions = [...currentDimensions, dimension];
-      } else {
-        // Remove dimension
-        newDimensions = currentDimensions.filter(dim => dim !== dimension);
-      }
-      
-      const updatedSelections = [...currentSelections];
-      updatedSelections[datasetIndex] = {
-        ...updatedSelections[datasetIndex],
-        selectedDimensions: newDimensions
-      };
-      
-      form.setValue("datasetSelections", updatedSelections);
-    }
-  };
-
-  // Handle Teams user selection
-  const handleTeamsUserToggle = (userId: string, checked: boolean) => {
-    const currentTeamsUsers = form.getValues("recipients.teams") || [];
-    
-    if (checked) {
-      if (!currentTeamsUsers.includes(userId)) {
-        const updatedTeamsUsers = [...currentTeamsUsers, userId];
-        form.setValue("recipients.teams", updatedTeamsUsers);
-      }
-    } else {
-      const updatedTeamsUsers = currentTeamsUsers.filter(id => id !== userId);
-      form.setValue("recipients.teams", updatedTeamsUsers);
-    }
-  };
-
-  // Check if Teams user is selected
-  const isTeamsUserSelected = (userId: string) => {
-    const selectedTeamsUsers = form.getValues("recipients.teams") || [];
-    return selectedTeamsUsers.includes(userId);
-  };
-
-  // Check if a dimension is selected for a dataset
-  const isDimensionSelected = (datasetId: string, dimension: string) => {
-    const datasetSelections = form.getValues("datasetSelections");
-    const datasetSelection = datasetSelections.find(ds => ds.datasetId === datasetId);
-    return datasetSelection?.selectedDimensions?.includes(dimension) || false;
-  };
-
-  // Get selected KPI for a dataset
-  const getSelectedKpi = (datasetId: string) => {
-    const datasetSelections = form.getValues("datasetSelections");
-    return datasetSelections.find(ds => ds.datasetId === datasetId)?.selectedKpi || "";
-  };
-
-  // Filter Teams users based on search query
-  const filteredTeamsUsers = useMemo(() => {
-    if (!searchTeamsQuery.trim()) return mockTeamsUsers;
-    
-    const query = searchTeamsQuery.toLowerCase();
-    return mockTeamsUsers.filter(user => 
-      user.name.toLowerCase().includes(query) || 
-      user.email.toLowerCase().includes(query)
-    );
-  }, [searchTeamsQuery]);
-
-  // Handle notification channel toggle
-  const handleNotificationToggle = (channel: NotificationType, checked: boolean) => {
-    form.setValue(`notificationChannels.${channel}`, checked);
-    
-    // If enabling a channel, switch to its tab
-    if (checked) {
-      setActiveNotificationTab(channel);
-    } else {
-      // If disabling the active tab, switch to first enabled channel
-      if (activeNotificationTab === channel) {
-        const channels: NotificationType[] = ['email', 'whatsapp', 'teams'];
-        const enabledChannels = channels.filter(c => {
-          if (c === channel) return false; // Skip the one being disabled
-          return form.getValues(`notificationChannels.${c}`);
-        });
-        
-        if (enabledChannels.length > 0) {
-          setActiveNotificationTab(enabledChannels[0]);
-        }
-      }
-    }
-  };
-
-  const onSubmit = (data: CreateAlertValues) => {
-    console.log("Form submitted:", data);
-    
-    toast({
-      title: "Alert created",
-      description: `Alert "${data.name}" has been created successfully.`,
+    // Create alert logic here
+    console.log('Creating alert with data:', {
+      alertName,
+      alertDescription,
+      isActive: isActive === 'active',
+      systemPrompt,
+      frequencyType,
+      frequencyValue,
+      startDate,
+      endDate,
+      workspaceId,
+      datasetId,
+      daxQuery
     });
-    
-    setTimeout(() => navigate("/alerts"), 1500);
+
+    toast({
+      title: "Alert Created",
+      description: "Your alert has been created successfully"
+    });
+
+    navigate('/alerts');
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => navigate("/alerts")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-bold">Create New Alert</h1>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Create Alert</h1>
+        <p className="text-muted-foreground">Set up a new data quality alert</p>
       </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Alert Details */}
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Alert Details</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Alert Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Alert Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="alertName">Alert Name</Label>
+              <Input
+                id="alertName"
+                value={alertName}
+                onChange={(e) => setAlertName(e.target.value)}
+                placeholder="Enter alert name"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="alertDescription">Alert Description</Label>
+              <Textarea
+                id="alertDescription"
+                value={alertDescription}
+                onChange={(e) => setAlertDescription(e.target.value)}
+                placeholder="Enter alert description"
+              />
+            </div>
+
+            <div>
+              <Label>Status</Label>
+              <RadioGroup value={isActive} onValueChange={setIsActive} className="flex gap-6 mt-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="active" id="active" />
+                  <Label htmlFor="active">Active</Label>
                 </div>
-                <Separator />
-                
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alert Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter alert name" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A descriptive name for this alert.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the purpose of this alert" 
-                          className="min-h-[100px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Provide context about what this alert monitors.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="active"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Active</FormLabel>
-                        <FormDescription>
-                          Activate this alert immediately after creation.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="inactive" id="inactive" />
+                  <Label htmlFor="inactive">Inactive</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Prompt */}
+        <Card>
+          <CardHeader>
+            <CardTitle>System Prompt</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Customize how the AI interprets and analyzes your data. Leave empty to use the default system prompt.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder="Enter custom system prompt..."
+              className="min-h-[120px] resize-y"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Frequency Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Frequency Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Frequency Type</Label>
+                <Select value={frequencyType} onValueChange={setFrequencyType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                    <SelectItem value="hourly">Hourly</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              {/* Data Sources & Dimensions Section */}
-              <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
-                <div className="flex items-center gap-2">
-                  <Database className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Data Sources & Dimensions</h2>
-                </div>
-                <Separator />
-                
-                {/* Datasets with nested KPIs and Dimensions */}
-                <FormField
-                  control={form.control}
-                  name="datasetSelections"
-                  render={() => (
-                    <FormItem>
-                      <div className="mb-4">
-                        <FormLabel>Datasets</FormLabel>
-                        <FormDescription>
-                          Select one or more datasets and configure their KPIs and dimensions.
-                        </FormDescription>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        {datasets.map((dataset) => (
-                          <Card key={dataset.id} className="overflow-hidden border-2 transition-all duration-200 hover:border-blue-200">
-                            <CardHeader className="bg-slate-50 p-4 flex flex-row items-center space-y-0 gap-3">
-                              <Checkbox
-                                id={`dataset-${dataset.id}`}
-                                checked={isDatasetSelected(dataset.id)}
-                                onCheckedChange={(checked) => 
-                                  handleDatasetToggle(dataset.id, checked === true)
-                                }
-                              />
-                              <CardTitle className="text-base font-medium">{dataset.name}</CardTitle>
-                            </CardHeader>
-                            
-                            {isDatasetSelected(dataset.id) && (
-                              <CardContent className="p-4 pt-6 bg-white">
-                                {/* KPI Selection */}
-                                <div className="mb-6">
-                                  <FormLabel className="mb-2 block">KPI for {dataset.name}</FormLabel>
-                                  <Select 
-                                    value={getSelectedKpi(dataset.id)}
-                                    onValueChange={(value) => handleKpiChange(dataset.id, value)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select a KPI" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {dataset.kpis.map((kpiId) => (
-                                        <SelectItem key={kpiId} value={kpiId}>
-                                          {kpiConfig[kpiId as keyof typeof kpiConfig]?.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                
-                                {/* Dimensions Selection */}
-                                <div>
-                                  <FormLabel className="mb-2 block">Dimensions for {dataset.name}</FormLabel>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {dataset.dimensions.map((dimensionId) => (
-                                      <div key={dimensionId} className="flex items-center space-x-2">
-                                        <Checkbox 
-                                          id={`${dataset.id}-${dimensionId}`}
-                                          checked={isDimensionSelected(dataset.id, dimensionId)}
-                                          onCheckedChange={(checked) => 
-                                            handleDimensionToggle(dataset.id, dimensionId, checked === true)
-                                          }
-                                        />
-                                        <label 
-                                          htmlFor={`${dataset.id}-${dimensionId}`}
-                                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                        >
-                                          {dimensionsConfig[dimensionId as keyof typeof dimensionsConfig]?.name}
-                                        </label>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </CardContent>
-                            )}
-                          </Card>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+
+              <div>
+                <Label>Every</Label>
+                <Input
+                  type="number"
+                  value={frequencyValue}
+                  onChange={(e) => setFrequencyValue(e.target.value)}
+                  placeholder="Enter value"
                 />
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* System Prompt */}
-              <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">System Prompt</h2>
-                </div>
-                <Separator />
-                
-                <Collapsible className="w-full" defaultOpen>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="flex w-full justify-between">
-                      <span>Advanced AI Configuration</span>
-                      <span>+</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "Pick start date"}
                     </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <FormField
-                      control={form.control}
-                      name="systemPrompt"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Custom System Prompt</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Enter instructions for the AI when analyzing this data"
-                              className="min-h-[150px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Customize how the AI interprets and analyzes your data. 
-                            Leave empty to use the default system prompt.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
                     />
-                  </CollapsibleContent>
-                </Collapsible>
+                  </PopoverContent>
+                </Popover>
               </div>
-              
-              {/* Notification Settings */}
-              <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Notification Settings</h2>
-                </div>
-                <Separator />
-                
-                {/* Notification Channel Selection */}
-                <div className="space-y-4">
-                  <p className="text-sm font-medium">Notification Channels</p>
-                  
-                  <div className="grid grid-cols-3 gap-2">
-                    <FormField
-                      control={form.control}
-                      name="notificationChannels.email"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-                                handleNotificationToggle('email', checked === true);
-                              }}
-                            />
-                          </FormControl>
-                          <div className="flex items-center space-x-1">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Email</span>
-                          </div>
-                        </FormItem>
+
+              <div>
+                <Label>End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
                       )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : "Pick end date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
                     />
-                    
-                    <FormField
-                      control={form.control}
-                      name="notificationChannels.whatsapp"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-                                handleNotificationToggle('whatsapp', checked === true);
-                              }}
-                            />
-                          </FormControl>
-                          <div className="flex items-center space-x-1">
-                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">WhatsApp</span>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="notificationChannels.teams"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-                                handleNotificationToggle('teams', checked === true);
-                              }}
-                            />
-                          </FormControl>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Teams</span>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="emailTemplate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Template</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a template" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {emailTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4" />
-                                <span>{template.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose how your alert notifications will appear.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Recipients Configuration with Tabs for Different Channels */}
-                <div className="space-y-4">
-                  <p className="text-sm font-medium">Alert Recipients</p>
-                  
-                  <Tabs 
-                    value={activeNotificationTab} 
-                    onValueChange={(value) => setActiveNotificationTab(value as NotificationType)}
-                    className="w-full"
-                  >
-                    <TabsList className="grid grid-cols-3">
-                      <TabsTrigger 
-                        value="email" 
-                        disabled={!form.getValues("notificationChannels.email")}
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Email
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="whatsapp" 
-                        disabled={!form.getValues("notificationChannels.whatsapp")}
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        WhatsApp
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="teams" 
-                        disabled={!form.getValues("notificationChannels.teams")}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        MS Teams
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="email" className="pt-4">
-                      <FormField
-                        control={form.control}
-                        name="recipients.email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                placeholder="email@example.com, another@example.com" 
-                                {...field} 
-                                disabled={!form.getValues("notificationChannels.email")}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Comma-separated list of email addresses to receive the alerts.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </TabsContent>
-                    
-                    <TabsContent value="whatsapp" className="pt-4">
-                      <FormField
-                        control={form.control}
-                        name="recipients.whatsapp"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                placeholder="+1234567890, +0987654321" 
-                                {...field} 
-                                disabled={!form.getValues("notificationChannels.whatsapp")}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Comma-separated list of WhatsApp phone numbers with country code (+) to receive alerts.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </TabsContent>
-                    
-                    <TabsContent value="teams" className="pt-4">
-                      <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="recipients.teams"
-                          render={() => (
-                            <FormItem>
-                              <FormDescription className="mb-2">
-                                Select Microsoft Teams users to receive the alerts.
-                              </FormDescription>
-                              <div className="space-y-4">
-                                <div className="relative">
-                                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                  <Input
-                                    placeholder="Search users..."
-                                    value={searchTeamsQuery}
-                                    onChange={(e) => setSearchTeamsQuery(e.target.value)}
-                                    className="pl-9"
-                                  />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
-                                  {filteredTeamsUsers.map((user) => (
-                                    <div key={user.id} className="flex items-center space-x-2 rounded-md border p-2">
-                                      <Checkbox 
-                                        id={`teams-user-${user.id}`} 
-                                        checked={isTeamsUserSelected(user.id)}
-                                        onCheckedChange={(checked) => 
-                                          handleTeamsUserToggle(user.id, checked === true)
-                                        }
-                                        disabled={!form.getValues("notificationChannels.teams")}
-                                      />
-                                      <label 
-                                        htmlFor={`teams-user-${user.id}`}
-                                        className="flex flex-col cursor-pointer"
-                                      >
-                                        <span className="text-sm font-medium">{user.name}</span>
-                                        <span className="text-xs text-muted-foreground">{user.email}</span>
-                                      </label>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
-          </div>
-          
-          <div className="flex justify-end gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate("/alerts")}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Create Alert</Button>
-          </div>
-        </form>
-      </Form>
+          </CardContent>
+        </Card>
+
+        {/* DAX Query */}
+        <Card>
+          <CardHeader>
+            <CardTitle>DAX Query</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="workspaceId">Workspace ID</Label>
+              <Input
+                id="workspaceId"
+                value={workspaceId}
+                onChange={(e) => setWorkspaceId(e.target.value)}
+                placeholder="Enter workspace ID"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="datasetId">Dataset ID</Label>
+              <Input
+                id="datasetId"
+                value={datasetId}
+                onChange={(e) => setDatasetId(e.target.value)}
+                placeholder="Enter dataset ID"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="daxQuery">DAX Query</Label>
+              <Textarea
+                id="daxQuery"
+                value={daxQuery}
+                onChange={(e) => setDaxQuery(e.target.value)}
+                placeholder="Enter your DAX query..."
+                className="min-h-[120px] font-mono"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Submit Actions */}
+        <div className="flex gap-4">
+          <Button type="submit">Create Alert</Button>
+          <Button type="button" variant="outline" onClick={() => navigate('/alerts')}>
+            Cancel
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

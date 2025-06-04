@@ -9,8 +9,7 @@ import {
   History,
   X,
   User,
-  Database,
-  Eye
+  Database
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -102,15 +101,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </h3>
               <NavItem 
                 icon={Database} 
-                label="Manage Data Catalog" 
+                label="Data Catalog" 
                 href="/data-catalog" 
-                active={pathname === "/data-catalog"} 
-              />
-              <NavItem 
-                icon={Eye} 
-                label="View Data Catalog" 
-                href="/data-catalog/view" 
-                active={pathname === "/data-catalog/view"} 
+                active={pathname.startsWith("/data-catalog")} 
               />
             </div>
             

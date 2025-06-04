@@ -139,9 +139,10 @@ const App = () => {
               <Route path="/alerts/:id" element={<AlertDetail />} />
               <Route path="/history" element={<History />} />
               
-              {/* Data Catalog */}
-              <Route path="/data-catalog" element={<DataCatalogManage />} />
-              <Route path="/data-catalog/view" element={<DataCatalogView />} />
+              {/* Data Catalog Routes */}
+              <Route path="/data-catalog" element={<DataCatalog />} />
+              <Route path="/data-catalog/manage" element={<DataCatalogManage />} />
+              <Route path="/data-catalog/view/:tableId" element={<DataCatalogView />} />
               
               {/* Admin Routes */}
               <Route path="/users" element={<Users />} />
