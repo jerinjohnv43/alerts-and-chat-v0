@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AlertCard } from '@/components/alerts/AlertCard';
 import { AlertFilters } from '@/components/alerts/AlertFilters';
 import { alerts } from '@/data/mockData';
 import { Alert, AlertFiltersType } from '@/types/alerts';
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Plus } from "lucide-react";
 
 const Alerts: React.FC = () => {
   const [allAlerts, setAllAlerts] = useState<Alert[]>(alerts);
@@ -86,9 +88,17 @@ const Alerts: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Alerts</h1>
-        <p className="text-muted-foreground">Monitor and manage your data quality alerts</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Alerts</h1>
+          <p className="text-muted-foreground">Monitor and manage your data quality alerts</p>
+        </div>
+        <Link to="/alerts/create">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Alert
+          </Button>
+        </Link>
       </div>
       
       {/* Search Bar */}
@@ -107,7 +117,7 @@ const Alerts: React.FC = () => {
       
       <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
       
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAlerts.length > 0 ? (
           filteredAlerts.map((alert) => (
             <AlertCard 
@@ -117,7 +127,7 @@ const Alerts: React.FC = () => {
             />
           ))
         ) : (
-          <div className="text-center py-8">
+          <div className="col-span-full text-center py-8">
             <p className="text-muted-foreground">
               {searchTerm ? 'No alerts found matching your search.' : 'No alerts found.'}
             </p>

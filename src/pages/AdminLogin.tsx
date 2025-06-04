@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-interface LoginProps {
-  onLogin: () => void;
+interface AdminLoginProps {
+  onAdminLogin: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const AdminLogin: React.FC<AdminLoginProps> = ({ onAdminLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,12 +24,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     // Simulate login delay
     setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
-        onLogin();
-        navigate('/alerts');
+      if (username === 'admin' && password === 'admin') {
+        onAdminLogin();
+        navigate('/admin-console');
         toast({
           title: "Login successful",
-          description: "Welcome to BI Admin Portal!"
+          description: "Welcome to the Admin Console!"
         });
       } else {
         toast({
@@ -43,33 +42,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }, 1000);
   };
 
-  const handleMicrosoftLogin = () => {
-    // Simulate Microsoft OAuth login
-    setIsLoading(true);
-    setTimeout(() => {
-      onLogin();
-      navigate('/alerts');
-      toast({
-        title: "Microsoft login successful",
-        description: "Welcome to BI Admin Portal!"
-      });
-      setIsLoading(false);
-    }, 2000);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-4">
+      <div className="max-w-md w-full">
         <Card>
           <CardHeader className="space-y-1">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 rounded bg-gradient-to-r from-blue-600 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                BI
-              </div>
-            </div>
-            <CardTitle className="text-2xl text-center">BI Admin Portal</CardTitle>
+            <CardTitle className="text-2xl text-center">Admin Console Login</CardTitle>
             <CardDescription className="text-center">
-              Sign in to your account to continue
+              Enter your admin credentials to access the console
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -97,7 +77,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 />
               </div>
               <div className="text-sm text-muted-foreground text-center">
-                Default credentials: admin / password
+                Default credentials: admin / admin
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
@@ -108,39 +88,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
-              
-              <div className="relative">
-                <Separator />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-white px-2 text-xs text-muted-foreground">OR</span>
-                </div>
-              </div>
-              
               <Button 
                 type="button" 
                 variant="outline" 
                 className="w-full"
-                onClick={handleMicrosoftLogin}
-                disabled={isLoading}
+                onClick={() => navigate('/login')}
               >
-                <svg className="w-4 h-4 mr-2" viewBox="0 0 21 21">
-                  <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                  <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                  <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
-                </svg>
-                Continue with Microsoft
-              </Button>
-              
-              <Separator />
-              
-              <Button 
-                type="button" 
-                variant="link" 
-                className="w-full"
-                onClick={() => navigate('/admin-login')}
-              >
-                Admin Console
+                Back to User Login
               </Button>
             </CardFooter>
           </form>
@@ -150,4 +104,4 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   );
 };
 
-export default Login;
+export default AdminLogin;

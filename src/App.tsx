@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import AdminConsole from "./pages/AdminConsole/AdminConsole";
 import ClientOnboarding from "./pages/AdminConsole/ClientOnboarding";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,13 +69,23 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Login Route */}
+            {/* Login Routes */}
             <Route 
               path="/login" 
               element={
                 isLoggedIn ? 
                 <Navigate to="/alerts" replace /> : 
-                <Login onLogin={handleLogin} onAdminLogin={handleAdminLogin} />
+                <Login onLogin={handleLogin} />
+              }
+            />
+            
+            {/* Admin Login Route */}
+            <Route 
+              path="/admin-login" 
+              element={
+                isAdminLoggedIn ? 
+                <Navigate to="/admin-console" replace /> : 
+                <AdminLogin onAdminLogin={handleAdminLogin} />
               }
             />
 
@@ -84,7 +95,7 @@ const App = () => {
               element={
                 isAdminLoggedIn ? 
                 <AdminConsole onLogout={handleAdminLogout} /> : 
-                <Navigate to="/login" replace />
+                <Navigate to="/admin-login" replace />
               }
             />
             <Route 
@@ -92,7 +103,7 @@ const App = () => {
               element={
                 isAdminLoggedIn ? 
                 <ClientOnboarding onLogout={handleAdminLogout} /> : 
-                <Navigate to="/login" replace />
+                <Navigate to="/admin-login" replace />
               }
             />
             <Route 
@@ -100,7 +111,7 @@ const App = () => {
               element={
                 isAdminLoggedIn ? 
                 <ClientOnboarding onLogout={handleAdminLogout} /> : 
-                <Navigate to="/login" replace />
+                <Navigate to="/admin-login" replace />
               }
             />
 

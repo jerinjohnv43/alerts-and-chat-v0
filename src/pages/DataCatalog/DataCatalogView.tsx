@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface TableColumn {
@@ -65,9 +65,15 @@ const DataCatalogView: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">View Data Catalog</h1>
-        <p className="text-muted-foreground">Review all your data tables and columns</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">View Data Catalog</h1>
+          <p className="text-muted-foreground">Review all your data tables and columns</p>
+        </div>
+        <Button onClick={() => navigate('/data-catalog')}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Table
+        </Button>
       </div>
 
       <div className="space-y-6">

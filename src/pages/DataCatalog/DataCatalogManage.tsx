@@ -1,11 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Trash2, Upload, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Wand2, Save, Trash2, Upload } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface TableColumn {
   id: string;
@@ -27,56 +37,19 @@ interface DataTable {
 }
 
 const DataCatalogManage: React.FC = () => {
+  const [currentTable, setCurrentTable] = useState<DataTable>({
+    id: '',
+    tableName: '',
+    tableDescription: '',
+    columns: []
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [tables, setTables] = useState<DataTable[]>([
-    {
-      id: '1',
-      tableName: 'Users',
-      tableDescription: 'User account information',
-      columns: [
-        {
-          id: '1-1',
-          columnName: 'user_id',
-          dataType: 'INTEGER',
-          description: 'Unique identifier for users',
-          tags: 'primary_key, identity',
-          categories: 'User Management',
-          relationshipTableName: '',
-          relationshipColumnName: '',
-          defaultCondition: 'NOT NULL'
-        }
-      ]
-    }
-  ]);
 
-  const handleAddTable = () => {
-    const newTable: DataTable = {
-      id: Date.now().toString(),
-      tableName: '',
-      tableDescription: '',
-      columns: []
-    };
-    setTables([...tables, newTable]);
-  };
-
-  const handleDeleteTable = (tableId: string) => {
-    setTables(tables.filter(table => table.id !== tableId));
-    toast({
-      title: "Table Deleted",
-      description: "Table has been deleted from the catalog",
-    });
-  };
-
-  const handleUpdateTable = (tableId: string, field: keyof DataTable, value: string) => {
-    setTables(tables.map(table => 
-      table.id === tableId ? { ...table, [field]: value } : table
-    ));
-  };
-
-  const handleAddColumn = (tableId: string) => {
+  const addNewColumn = () => {
     const newColumn: TableColumn = {
-      id: `${tableId}-${Date.now()}`,
+      id: Date.now().toString(),
       columnName: '',
       dataType: '',
       description: '',
@@ -86,84 +59,171 @@ const DataCatalogManage: React.FC = () => {
       relationshipColumnName: '',
       defaultCondition: ''
     };
-    
-    setTables(tables.map(table => 
-      table.id === tableId 
-        ? { ...table, columns: [...table.columns, newColumn] }
-        : table
-    ));
+    setCurrentTable(prev => ({
+      ...prev,
+      columns: [...prev.columns, newColumn]
+    }));
   };
 
-  const handleDeleteColumn = (tableId: string, columnId: string) => {
-    setTables(tables.map(table => 
-      table.id === tableId 
-        ? { ...table, columns: table.columns.filter(col => col.id !== columnId) }
-        : table
-    ));
+  const removeColumn = (columnId: string) => {
+    setCurrentTable(prev => ({
+      ...prev,
+      columns: prev.columns.filter(col => col.id !== columnId)
+    }));
   };
 
-  const handleUpdateColumn = (tableId: string, columnId: string, field: keyof TableColumn, value: string) => {
-    setTables(tables.map(table => 
-      table.id === tableId 
-        ? {
-            ...table,
-            columns: table.columns.map(col => 
-              col.id === columnId ? { ...col, [field]: value } : col
-            )
-          }
-        : table
-    ));
+  const updateColumn = (columnId: string, field: keyof TableColumn, value: string) => {
+    setCurrentTable(prev => ({
+      ...prev,
+      columns: prev.columns.map(col => 
+        col.id === columnId ? { ...col, [field]: value } : col
+      )
+    }));
   };
 
-  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Simulate file import
-      toast({
-        title: "File Import",
-        description: `Importing data from ${file.name}...`,
-      });
-      // Here you would implement actual CSV/Excel parsing
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+
+        if (jsonData.length > 0) {
+          const headers = jsonData[0];
+          const expectedHeaders = [
+            'TableName', 'TableDescription', 'ColumnName', 'DataType', 
+            'Description', 'Tags', 'Categories', 'Relationship_TableName', 
+            'Relationship_ColumnName', 'DefaultCondition'
+          ];
+
+          // Check if headers match expected format
+          const headerMatch = expectedHeaders.every(header => headers.includes(header));
+          
+          if (headerMatch) {
+            const rows = jsonData.slice(1);
+            if (rows.length > 0) {
+              const firstRow = rows[0];
+              const tableNameIndex = headers.indexOf('TableName');
+              const tableDescIndex = headers.indexOf('TableDescription');
+              
+              // Set table info from first row
+              setCurrentTable({
+                id: Date.now().toString(),
+                tableName: firstRow[tableNameIndex] || '',
+                tableDescription: firstRow[tableDescIndex] || '',
+                columns: rows.map((row, index) => ({
+                  id: (Date.now() + index).toString(),
+                  columnName: row[headers.indexOf('ColumnName')] || '',
+                  dataType: row[headers.indexOf('DataType')] || '',
+                  description: row[headers.indexOf('Description')] || '',
+                  tags: row[headers.indexOf('Tags')] || '',
+                  categories: row[headers.indexOf('Categories')] || '',
+                  relationshipTableName: row[headers.indexOf('Relationship_TableName')] || '',
+                  relationshipColumnName: row[headers.indexOf('Relationship_ColumnName')] || '',
+                  defaultCondition: row[headers.indexOf('DefaultCondition')] || ''
+                }))
+              });
+
+              toast({
+                title: "File imported successfully",
+                description: `Imported ${rows.length} columns`
+              });
+            }
+          } else {
+            toast({
+              title: "Invalid file format",
+              description: "Please ensure your file has the correct column headers",
+              variant: "destructive"
+            });
+          }
+        }
+      } catch (error) {
+        toast({
+          title: "Error reading file",
+          description: "Please check your file format and try again",
+          variant: "destructive"
+        });
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
-  const handleGenerateWithAI = async () => {
-    setIsGenerating(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const updatedTables = tables.map(table => ({
-        ...table,
-        columns: table.columns.map(column => ({
-          ...column,
-          description: column.description || `Auto-generated description for ${column.columnName}`,
-          tags: column.tags || 'auto_generated, data_element',
-          categories: column.categories || 'General'
-        }))
-      }));
-      
-      setTables(updatedTables);
-      toast({
-        title: "AI Generation Complete",
-        description: "Descriptions and tags have been automatically generated",
-      });
-    } catch (error) {
-      toast({
-        title: "AI Generation Failed",
-        description: "Failed to generate descriptions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const generateAIDescriptions = async () => {
+    // Simulated AI generation - in a real app, this would call OpenAI API
+    const updatedColumns = currentTable.columns.map(column => ({
+      ...column,
+      description: column.description || `AI-generated description for ${column.columnName}`,
+      tags: column.tags || `${column.dataType.toLowerCase()}, auto-generated`,
+      categories: column.categories || 'Data Management'
+    }));
 
-  const handleSave = () => {
-    localStorage.setItem('dataCatalogTables', JSON.stringify(tables));
+    setCurrentTable(prev => ({
+      ...prev,
+      columns: updatedColumns
+    }));
+
     toast({
-      title: "Changes Saved",
-      description: "Data catalog has been updated successfully",
+      title: "AI descriptions generated",
+      description: "Descriptions, tags, and categories have been auto-filled"
     });
+  };
+
+  const saveTable = () => {
+    if (!currentTable.tableName.trim()) {
+      toast({
+        title: "Table name required",
+        description: "Please enter a table name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (currentTable.columns.length === 0) {
+      toast({
+        title: "Columns required",
+        description: "Please add at least one column",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Save to localStorage
+    const existingTables = JSON.parse(localStorage.getItem('dataCatalogTables') || '[]');
+    const updatedTables = isEditing 
+      ? existingTables.map((table: DataTable) => table.id === currentTable.id ? currentTable : table)
+      : [...existingTables, { ...currentTable, id: Date.now().toString() }];
+
+    localStorage.setItem('dataCatalogTables', JSON.stringify(updatedTables));
+
+    toast({
+      title: "Table saved successfully",
+      description: `${currentTable.tableName} has been saved`
+    });
+
+    // Reset form
+    setCurrentTable({
+      id: '',
+      tableName: '',
+      tableDescription: '',
+      columns: []
+    });
+    setIsEditing(false);
+  };
+
+  const resetForm = () => {
+    setCurrentTable({
+      id: '',
+      tableName: '',
+      tableDescription: '',
+      columns: []
+    });
+    setIsEditing(false);
   };
 
   return (
@@ -173,182 +233,187 @@ const DataCatalogManage: React.FC = () => {
         <p className="text-muted-foreground">Add and manage your data tables and columns</p>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <Button onClick={handleAddTable}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Table
-        </Button>
-        <Button 
-          onClick={handleGenerateWithAI}
-          disabled={isGenerating}
-          variant="outline"
-        >
-          <Wand2 className="h-4 w-4 mr-2" />
-          {isGenerating ? 'Generating...' : 'Generate with AI'}
-        </Button>
-        <Button onClick={handleSave} variant="outline">
-          <Save className="h-4 w-4 mr-2" />
-          Save Changes
-        </Button>
-        <div className="relative">
-          <input
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            onChange={handleImportFile}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-          <Button variant="outline">
-            <Upload className="h-4 w-4 mr-2" />
-            Import CSV/Excel
+      <div className="space-y-6">
+        {/* File Upload and AI Generation */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Import & Generate</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import from Excel/CSV
+              </Button>
+              <Button
+                variant="outline"
+                onClick={generateAIDescriptions}
+                disabled={currentTable.columns.length === 0}
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Generate AI Descriptions
+              </Button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Table Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Table Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tableName">Table Name</Label>
+                <Input
+                  id="tableName"
+                  value={currentTable.tableName}
+                  onChange={(e) => setCurrentTable(prev => ({ ...prev, tableName: e.target.value }))}
+                  placeholder="Enter table name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="tableDescription">Table Description</Label>
+                <Textarea
+                  id="tableDescription"
+                  value={currentTable.tableDescription}
+                  onChange={(e) => setCurrentTable(prev => ({ ...prev, tableDescription: e.target.value }))}
+                  placeholder="Enter table description"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Columns */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Columns</CardTitle>
+              <Button onClick={addNewColumn}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Column
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {currentTable.columns.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Column Name</TableHead>
+                      <TableHead>Data Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead>Categories</TableHead>
+                      <TableHead>Relationship Table</TableHead>
+                      <TableHead>Relationship Column</TableHead>
+                      <TableHead>Default Condition</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentTable.columns.map((column) => (
+                      <TableRow key={column.id}>
+                        <TableCell>
+                          <Input
+                            value={column.columnName}
+                            onChange={(e) => updateColumn(column.id, 'columnName', e.target.value)}
+                            placeholder="Column name"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.dataType}
+                            onChange={(e) => updateColumn(column.id, 'dataType', e.target.value)}
+                            placeholder="Data type"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.description}
+                            onChange={(e) => updateColumn(column.id, 'description', e.target.value)}
+                            placeholder="Description"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.tags}
+                            onChange={(e) => updateColumn(column.id, 'tags', e.target.value)}
+                            placeholder="Tags"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.categories}
+                            onChange={(e) => updateColumn(column.id, 'categories', e.target.value)}
+                            placeholder="Categories"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.relationshipTableName}
+                            onChange={(e) => updateColumn(column.id, 'relationshipTableName', e.target.value)}
+                            placeholder="Table name"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.relationshipColumnName}
+                            onChange={(e) => updateColumn(column.id, 'relationshipColumnName', e.target.value)}
+                            placeholder="Column name"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.defaultCondition}
+                            onChange={(e) => updateColumn(column.id, 'defaultCondition', e.target.value)}
+                            placeholder="Default condition"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeColumn(column.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No columns added yet. Click "Add Column" to get started.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <div className="flex gap-4">
+          <Button onClick={saveTable} disabled={!currentTable.tableName.trim()}>
+            Save Table
+          </Button>
+          <Button variant="outline" onClick={resetForm}>
+            Reset
           </Button>
         </div>
-      </div>
-
-      <div className="space-y-6">
-        {tables.map((table) => (
-          <Card key={table.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                  <div className="space-y-2">
-                    <Label htmlFor={`table-name-${table.id}`}>Table Name</Label>
-                    <Input
-                      id={`table-name-${table.id}`}
-                      value={table.tableName}
-                      onChange={(e) => handleUpdateTable(table.id, 'tableName', e.target.value)}
-                      placeholder="Enter table name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`table-desc-${table.id}`}>Table Description</Label>
-                    <Input
-                      id={`table-desc-${table.id}`}
-                      value={table.tableDescription}
-                      onChange={(e) => handleUpdateTable(table.id, 'tableDescription', e.target.value)}
-                      placeholder="Enter table description"
-                    />
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteTable(table.id)}
-                  className="text-destructive hover:text-destructive ml-4"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-lg font-medium">Columns</h4>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddColumn(table.id)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Column
-                  </Button>
-                </div>
-                
-                {table.columns.map((column) => (
-                  <div key={column.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteColumn(table.id, column.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Column Name</Label>
-                        <Input
-                          value={column.columnName}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'columnName', e.target.value)}
-                          placeholder="Column name"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Data Type</Label>
-                        <Input
-                          value={column.dataType}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'dataType', e.target.value)}
-                          placeholder="Data type"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Input
-                          value={column.description}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'description', e.target.value)}
-                          placeholder="Description"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Tags</Label>
-                        <Input
-                          value={column.tags}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'tags', e.target.value)}
-                          placeholder="Tags"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Categories</Label>
-                        <Input
-                          value={column.categories}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'categories', e.target.value)}
-                          placeholder="Categories"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Relationship Table</Label>
-                        <Input
-                          value={column.relationshipTableName}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'relationshipTableName', e.target.value)}
-                          placeholder="Related table"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Relationship Column</Label>
-                        <Input
-                          value={column.relationshipColumnName}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'relationshipColumnName', e.target.value)}
-                          placeholder="Related column"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Default Condition</Label>
-                        <Input
-                          value={column.defaultCondition}
-                          onChange={(e) => handleUpdateColumn(table.id, column.id, 'defaultCondition', e.target.value)}
-                          placeholder="Default condition"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {table.columns.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No columns added yet. Click "Add Column" to get started.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {tables.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No tables added yet. Click "Add Table" to get started.
-          </div>
-        )}
       </div>
     </div>
   );
