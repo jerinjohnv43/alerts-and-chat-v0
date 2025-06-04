@@ -14,6 +14,7 @@ import CreateAlert from "./pages/CreateAlert";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
+import DataCatalog from "./pages/DataCatalog";
 import DataCatalogManage from "./pages/DataCatalog/DataCatalogManage";
 import DataCatalogView from "./pages/DataCatalog/DataCatalogView";
 import NotFound from "./pages/NotFound";
