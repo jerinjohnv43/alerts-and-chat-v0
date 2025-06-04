@@ -3,7 +3,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
-  Bell, 
   Settings, 
   Users, 
   AlertTriangle,
@@ -11,7 +10,7 @@ import {
   X,
   User,
   Database,
-  UserPlus
+  Eye
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -103,21 +102,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </h3>
               <NavItem 
                 icon={Database} 
-                label="Data Catalog" 
+                label="Manage Data Catalog" 
                 href="/data-catalog" 
                 active={pathname === "/data-catalog"} 
               />
-            </div>
-            
-            <div className="space-y-1">
-              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Client Management
-              </h3>
               <NavItem 
-                icon={UserPlus} 
-                label="Client Onboarding" 
-                href="/client-onboarding" 
-                active={pathname === "/client-onboarding"} 
+                icon={Eye} 
+                label="View Data Catalog" 
+                href="/data-catalog/view" 
+                active={pathname === "/data-catalog/view"} 
               />
             </div>
             

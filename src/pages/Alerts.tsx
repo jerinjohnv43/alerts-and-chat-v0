@@ -1,118 +1,137 @@
+
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { AlertCard } from '@/components/alerts/AlertCard';
 import { AlertFilters } from '@/components/alerts/AlertFilters';
-import { Alert, AlertFiltersType } from '@/types/alerts';
-import { alerts as mockAlerts } from '@/data/mockData';
-import { useToast } from '@/components/ui/use-toast';
-import { Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { mockAlerts } from '@/data/mockData';
+import { Alert } from '@/types/alerts';
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
-const Alerts = () => {
-  const { toast } = useToast();
+const Alerts: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
-  const [filters, setFilters] = useState<AlertFiltersType>({
-    search: "",
-    statuses: [],
-    active: null,
-    sortBy: "name",
-    sortOrder: "asc"
-  });
-  
-  const handleToggleActive = (id: string, active: boolean) => {
-    const updatedAlerts = alerts.map(alert => {
-      if (alert.id === id) {
-        return { ...alert, active };
+  const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>(mockAlerts);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleFilterChange = (filters: {
+    status: string;
+    severity: string;
+    dateRange: string;
+  }) => {
+    let filtered = alerts;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(alert => 
+        alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        alert.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        alert.metric.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(alert => alert.status === filters.status);
+    }
+
+    // Apply severity filter
+    if (filters.severity !== 'all') {
+      filtered = filtered.filter(alert => alert.severity === filters.severity);
+    }
+
+    // Apply date range filter
+    if (filters.dateRange !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+      
+      switch (filters.dateRange) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
       }
-      return alert;
-    });
+      
+      filtered = filtered.filter(alert => new Date(alert.createdAt) >= filterDate);
+    }
+
+    setFilteredAlerts(filtered);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
     
+    // Filter alerts based on search term
+    let filtered = alerts;
+    
+    if (value.trim()) {
+      filtered = filtered.filter(alert => 
+        alert.title.toLowerCase().includes(value.toLowerCase()) ||
+        alert.description.toLowerCase().includes(value.toLowerCase()) ||
+        alert.metric.toLowerCase().includes(value.toLowerCase())
+      );
+    }
+    
+    setFilteredAlerts(filtered);
+  };
+
+  const handleResolveAlert = (alertId: string) => {
+    const updatedAlerts = alerts.map(alert => 
+      alert.id === alertId 
+        ? { ...alert, status: 'resolved' as const }
+        : alert
+    );
     setAlerts(updatedAlerts);
     
-    toast({
-      title: `Alert ${active ? 'activated' : 'deactivated'}`,
-      description: `Alert ID: ${id} has been ${active ? 'activated' : 'deactivated'}.`,
-    });
+    // Re-apply current filters
+    const currentFilters = {
+      status: 'all',
+      severity: 'all', 
+      dateRange: 'all'
+    };
+    handleFilterChange(currentFilters);
   };
-  
-  const handleFilterChange = (newFilters: AlertFiltersType) => {
-    setFilters(newFilters);
-  };
-  
-  const filteredAlerts = alerts.filter(alert => {
-    if (filters.search && !alert.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !alert.description.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    
-    if (filters.statuses && filters.statuses.length > 0 && !filters.statuses.includes(alert.status)) {
-      return false;
-    }
-    
-    if (filters.active !== null && alert.active !== filters.active) {
-      return false;
-    }
-    
-    return true;
-  }).sort((a, b) => {
-    const sortBy = filters.sortBy || 'name';
-    const order = filters.sortOrder === 'asc' ? 1 : -1;
-    
-    if (sortBy === 'name') {
-      return a.name.localeCompare(b.name) * order;
-    } else {
-      return ((a[sortBy as keyof Alert] as number) - (b[sortBy as keyof Alert] as number)) * order;
-    }
-  });
 
   return (
-    <div className="space-y-6">
-      <div className="relative min-h-screen -mt-4 -mx-4 p-4 md:p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Alerts</h1>
-            <p className="text-muted-foreground">
-              Manage and monitor your Power BI alerts.
-            </p>
-          </div>
-          <Link to="/alerts/create">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Alert
-            </Button>
-          </Link>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Alerts</h1>
+        <p className="text-muted-foreground">Monitor and manage your data quality alerts</p>
+      </div>
+      
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search alerts..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
         </div>
-        
-        <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
-        
+      </div>
+      
+      <AlertFilters onFilterChange={handleFilterChange} />
+      
+      <div className="grid grid-cols-1 gap-4">
         {filteredAlerts.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredAlerts.map((alert) => (
-              <AlertCard 
-                key={alert.id} 
-                alert={alert} 
-                onToggleActive={handleToggleActive}
-              />
-            ))}
-          </div>
+          filteredAlerts.map((alert) => (
+            <AlertCard 
+              key={alert.id} 
+              alert={alert} 
+              onResolve={handleResolveAlert}
+            />
+          ))
         ) : (
-          <div className="text-center py-12 backdrop-blur-sm bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg">
-            <h3 className="text-lg font-medium mb-2">No alerts found</h3>
-            <p className="text-muted-foreground mb-4">
-              There are no alerts matching your current filters.
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {searchTerm ? 'No alerts found matching your search.' : 'No alerts found.'}
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setFilters({
-                search: "",
-                statuses: [],
-                active: null,
-                sortBy: "name",
-                sortOrder: "asc"
-              })}
-            >
-              Clear Filters
-            </Button>
           </div>
         )}
       </div>

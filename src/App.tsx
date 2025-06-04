@@ -14,9 +14,11 @@ import CreateAlert from "./pages/CreateAlert";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
-import DataCatalog from "./pages/DataCatalog";
+import DataCatalogManage from "./pages/DataCatalog/DataCatalogManage";
+import DataCatalogView from "./pages/DataCatalog/DataCatalogView";
 import NotFound from "./pages/NotFound";
-import ClientOnboarding from "./pages/ClientOnboarding";
+import AdminConsole from "./pages/AdminConsole/AdminConsole";
+import ClientOnboarding from "./pages/AdminConsole/ClientOnboarding";
 import Login from "./pages/Login";
 
 const queryClient = new QueryClient({
@@ -34,6 +36,11 @@ const App = () => {
     return storedLoginState === 'true';
   });
 
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    const storedAdminLoginState = localStorage.getItem('isAdminLoggedIn');
+    return storedAdminLoginState === 'true';
+  });
+
   const handleLogin = () => {
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
@@ -42,6 +49,16 @@ const App = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('isLoggedIn');
+  };
+
+  const handleAdminLogin = () => {
+    setIsAdminLoggedIn(true);
+    localStorage.setItem('isAdminLoggedIn', 'true');
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminLoggedIn(false);
+    localStorage.removeItem('isAdminLoggedIn');
   };
 
   return (
@@ -57,7 +74,33 @@ const App = () => {
               element={
                 isLoggedIn ? 
                 <Navigate to="/alerts" replace /> : 
-                <Login onLogin={handleLogin} />
+                <Login onLogin={handleLogin} onAdminLogin={handleAdminLogin} />
+              }
+            />
+
+            {/* Admin Console Routes */}
+            <Route 
+              path="/admin-console" 
+              element={
+                isAdminLoggedIn ? 
+                <AdminConsole onLogout={handleAdminLogout} /> : 
+                <Navigate to="/login" replace />
+              }
+            />
+            <Route 
+              path="/admin-console/client-onboarding/new" 
+              element={
+                isAdminLoggedIn ? 
+                <ClientOnboarding onLogout={handleAdminLogout} /> : 
+                <Navigate to="/login" replace />
+              }
+            />
+            <Route 
+              path="/admin-console/client-onboarding/edit/:clientId" 
+              element={
+                isAdminLoggedIn ? 
+                <ClientOnboarding onLogout={handleAdminLogout} /> : 
+                <Navigate to="/login" replace />
               }
             />
 
@@ -86,10 +129,8 @@ const App = () => {
               <Route path="/history" element={<History />} />
               
               {/* Data Catalog */}
-              <Route path="/data-catalog" element={<DataCatalog />} />
-              
-              {/* Client Onboarding */}
-              <Route path="/client-onboarding" element={<ClientOnboarding />} />
+              <Route path="/data-catalog" element={<DataCatalogManage />} />
+              <Route path="/data-catalog/view" element={<DataCatalogView />} />
               
               {/* Admin Routes */}
               <Route path="/users" element={<Users />} />

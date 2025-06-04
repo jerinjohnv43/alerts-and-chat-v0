@@ -5,16 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
   onLogin: () => void;
+  onAdminLogin: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onAdminLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       });
       setIsLoading(false);
     }, 1500);
+  };
+
+  const handleAdminConsole = () => {
+    setIsLoading(true);
+    // Simulate admin login
+    setTimeout(() => {
+      onAdminLogin();
+      navigate('/admin-console');
+      toast({
+        title: "Admin Console Access",
+        description: "Welcome to Admin Console",
+      });
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -126,6 +143,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <path fill="#ffb900" d="M24 24H12.6V12.6H24V24z"/>
             </svg>
             Continue with Microsoft
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Admin Access
+              </span>
+            </div>
+          </div>
+          
+          <Button 
+            variant="secondary" 
+            className="w-full" 
+            onClick={handleAdminConsole}
+            disabled={isLoading}
+          >
+            Admin Console
           </Button>
           
           <p className="text-sm text-center text-muted-foreground">
