@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Upload, Wand2 } from "lucide-react";
+import { Plus, Trash2, Upload, Wand2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
 interface TableColumn {
@@ -46,6 +46,20 @@ const DataCatalogManage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId) {
+      const savedTables = JSON.parse(localStorage.getItem('dataCatalogTables') || '[]');
+      const tableToEdit = savedTables.find((table: DataTable) => table.id === editId);
+      if (tableToEdit) {
+        setCurrentTable(tableToEdit);
+        setIsEditing(true);
+      }
+    }
+  }, [searchParams]);
 
   const addNewColumn = () => {
     const newColumn: TableColumn = {
@@ -102,7 +116,6 @@ const DataCatalogManage: React.FC = () => {
             'Relationship_ColumnName', 'DefaultCondition'
           ];
 
-          // Check if headers match expected format
           const headerMatch = expectedHeaders.every(header => headers.includes(header));
           
           if (headerMatch) {
@@ -112,9 +125,8 @@ const DataCatalogManage: React.FC = () => {
               const tableNameIndex = headers.indexOf('TableName');
               const tableDescIndex = headers.indexOf('TableDescription');
               
-              // Set table info from first row
               setCurrentTable({
-                id: Date.now().toString(),
+                id: isEditing ? currentTable.id : Date.now().toString(),
                 tableName: firstRow[tableNameIndex] || '',
                 tableDescription: firstRow[tableDescIndex] || '',
                 columns: rows.map((row, index) => ({
@@ -155,7 +167,6 @@ const DataCatalogManage: React.FC = () => {
   };
 
   const generateAIDescriptions = async () => {
-    // Simulated AI generation - in a real app, this would call OpenAI API
     const updatedColumns = currentTable.columns.map(column => ({
       ...column,
       description: column.description || `AI-generated description for ${column.columnName}`,
@@ -193,11 +204,10 @@ const DataCatalogManage: React.FC = () => {
       return;
     }
 
-    // Save to localStorage
     const existingTables = JSON.parse(localStorage.getItem('dataCatalogTables') || '[]');
     const updatedTables = isEditing 
       ? existingTables.map((table: DataTable) => table.id === currentTable.id ? currentTable : table)
-      : [...existingTables, { ...currentTable, id: Date.now().toString() }];
+      : [...existingTables, { ...currentTable, id: currentTable.id || Date.now().toString() }];
 
     localStorage.setItem('dataCatalogTables', JSON.stringify(updatedTables));
 
@@ -206,14 +216,7 @@ const DataCatalogManage: React.FC = () => {
       description: `${currentTable.tableName} has been saved`
     });
 
-    // Reset form
-    setCurrentTable({
-      id: '',
-      tableName: '',
-      tableDescription: '',
-      columns: []
-    });
-    setIsEditing(false);
+    navigate('/data-catalog');
   };
 
   const resetForm = () => {
@@ -228,9 +231,15 @@ const DataCatalogManage: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Manage Data Catalog</h1>
-        <p className="text-muted-foreground">Add and manage your data tables and columns</p>
+      <div className="mb-6 flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate('/data-catalog')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Data Catalog
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">{isEditing ? 'Edit Table' : 'Add New Table'}</h1>
+          <p className="text-muted-foreground">{isEditing ? 'Edit your data table and columns' : 'Add and manage your data tables and columns'}</p>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -408,7 +417,7 @@ const DataCatalogManage: React.FC = () => {
         {/* Actions */}
         <div className="flex gap-4">
           <Button onClick={saveTable} disabled={!currentTable.tableName.trim()}>
-            Save Table
+            {isEditing ? 'Update Table' : 'Save Table'}
           </Button>
           <Button variant="outline" onClick={resetForm}>
             Reset

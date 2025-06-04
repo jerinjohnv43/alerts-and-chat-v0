@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, Plus } from "lucide-react";
+import { Edit, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface TableColumn {
@@ -59,21 +59,26 @@ const DataCatalogView: React.FC = () => {
   }, []);
 
   const handleEditTable = (tableId: string) => {
-    // For now, redirect to manage page - in a real app, you'd pass the table ID
-    navigate('/data-catalog');
+    navigate(`/data-catalog/manage?edit=${tableId}`);
   };
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold">View Data Catalog</h1>
-          <p className="text-muted-foreground">Review all your data tables and columns</p>
-        </div>
-        <Button onClick={() => navigate('/data-catalog')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Table
+      <div className="mb-6 flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate('/data-catalog')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Data Catalog
         </Button>
+        <div className="flex-1 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">View Data Catalog</h1>
+            <p className="text-muted-foreground">Review all your data tables and columns</p>
+          </div>
+          <Button onClick={() => navigate('/data-catalog/manage')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Table
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -149,7 +154,7 @@ const DataCatalogView: React.FC = () => {
           <div className="text-center py-12">
             <h3 className="text-lg font-medium text-muted-foreground mb-2">No tables found</h3>
             <p className="text-muted-foreground mb-4">Start by adding tables in the Manage Data Catalog section.</p>
-            <Button onClick={() => navigate('/data-catalog')}>
+            <Button onClick={() => navigate('/data-catalog/manage')}>
               Go to Manage Data Catalog
             </Button>
           </div>

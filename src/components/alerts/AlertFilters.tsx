@@ -9,10 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
-  Search,
   SlidersHorizontal, 
   X 
 } from 'lucide-react';
@@ -25,17 +23,6 @@ interface AlertFiltersProps {
 }
 
 export function AlertFilters({ filters, onFilterChange }: AlertFiltersProps) {
-  const [searchTerm, setSearchTerm] = useState(filters.search || "");
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onFilterChange({ ...filters, search: searchTerm });
-  };
-  
   const handleStatusChange = (status: string, checked: boolean) => {
     const statuses = [...(filters.statuses || [])];
     
@@ -59,7 +46,6 @@ export function AlertFilters({ filters, onFilterChange }: AlertFiltersProps) {
   };
   
   const clearFilters = () => {
-    setSearchTerm("");
     onFilterChange({
       search: "",
       statuses: [],
@@ -74,17 +60,7 @@ export function AlertFilters({ filters, onFilterChange }: AlertFiltersProps) {
                            filters.active !== null;
   
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-between">
-      <form onSubmit={handleSearchSubmit} className="relative w-full sm:max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search alerts..."
-          className="pl-8 w-full"
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-      </form>
+    <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-end">
       <div className="flex gap-2">
         {hasActiveFilters && (
           <Button variant="outline" onClick={clearFilters} size="sm" className="gap-1">
