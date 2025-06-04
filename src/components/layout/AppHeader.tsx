@@ -8,7 +8,8 @@ import {
   Search,
   Sun,
   Moon,
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,10 @@ import {
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
+  onLogout: () => void;
 }
 
-export function AppHeader({ toggleSidebar }: AppHeaderProps) {
+export function AppHeader({ toggleSidebar, onLogout }: AppHeaderProps) {
   // This would be replaced with actual theme toggling logic
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   
@@ -54,7 +56,7 @@ export function AppHeader({ toggleSidebar }: AppHeaderProps) {
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search alerts, users, workspaces or reports..."
+          placeholder="Search alerts, users, or data catalog..."
           className="pl-8 w-full bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"
         />
       </div>
@@ -90,7 +92,10 @@ export function AppHeader({ toggleSidebar }: AppHeaderProps) {
             <DropdownMenuItem className="cursor-pointer">Company Settings</DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">Log out</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={onLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

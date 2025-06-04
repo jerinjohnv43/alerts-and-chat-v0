@@ -13,16 +13,11 @@ import AlertDetail from "./pages/AlertDetail";
 import CreateAlert from "./pages/CreateAlert";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
-import Monitor from "./pages/Monitor";
 import History from "./pages/History";
-import Analytics from "./pages/Analytics";
-import Workspaces from "./pages/Workspaces";
-import WorkspaceDetail from "./pages/WorkspaceDetail";
-import Reports from "./pages/Reports";
-import ReportMigration from "./pages/ReportMigration";
 import DataCatalog from "./pages/DataCatalog";
 import NotFound from "./pages/NotFound";
-import OnboardingPage from "./pages/OnboardingPage";
+import ClientOnboarding from "./pages/ClientOnboarding";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,14 +29,19 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
-    const storedOnboardingState = localStorage.getItem('isOnboarded');
-    return storedOnboardingState === 'true';
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    const storedLoginState = localStorage.getItem('isLoggedIn');
+    return storedLoginState === 'true';
   });
 
-  const completeOnboarding = () => {
-    setIsOnboarded(true);
-    localStorage.setItem('isOnboarded', 'true');
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem('isLoggedIn', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('isLoggedIn');
   };
 
   return (
@@ -51,44 +51,45 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Login Route */}
+            <Route 
+              path="/login" 
+              element={
+                isLoggedIn ? 
+                <Navigate to="/alerts" replace /> : 
+                <Login onLogin={handleLogin} />
+              }
+            />
+
             {/* Default Route */}
             <Route 
               path="/" 
               element={
-                isOnboarded ? 
+                isLoggedIn ? 
                 <Navigate to="/alerts" replace /> : 
-                <Navigate to="/onboarding" replace />
+                <Navigate to="/login" replace />
               } 
             />
-
-            {/* Onboarding Route - Allow direct access */}
-            <Route 
-              path="/onboarding" 
-              element={<OnboardingPage onComplete={completeOnboarding} />}
-            />
             
-            {/* Protected App Routes - redirects to onboarding if not completed */}
+            {/* Protected App Routes - redirects to login if not authenticated */}
             <Route 
               element={
-                isOnboarded ? 
-                <AppLayout /> : 
-                <Navigate to="/onboarding" replace />
+                isLoggedIn ? 
+                <AppLayout onLogout={handleLogout} /> : 
+                <Navigate to="/login" replace />
               }
             >
               {/* Alert Routes */}
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/alerts/create" element={<CreateAlert />} />
               <Route path="/alerts/:id" element={<AlertDetail />} />
-              <Route path="/monitor" element={<Monitor />} />
               <Route path="/history" element={<History />} />
-              <Route path="/analytics" element={<Analytics />} />
               
-              {/* Power BI Routes */}
-              <Route path="/workspaces" element={<Workspaces />} />
-              <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/report-migration" element={<ReportMigration />} />
+              {/* Data Catalog */}
               <Route path="/data-catalog" element={<DataCatalog />} />
+              
+              {/* Client Onboarding */}
+              <Route path="/client-onboarding" element={<ClientOnboarding />} />
               
               {/* Admin Routes */}
               <Route path="/users" element={<Users />} />

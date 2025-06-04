@@ -3,20 +3,15 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
-  BarChart3, 
   Bell, 
   Settings, 
   Users, 
-  Activity,
   AlertTriangle,
   History,
   X,
   User,
   Database,
-  FileText,
-  Folder,
-  FolderOpen,
-  MoveHorizontal
+  UserPlus
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -95,52 +90,34 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 active={pathname === "/alerts" || pathname.startsWith("/alerts/")} 
               />
               <NavItem 
-                icon={Activity} 
-                label="Monitor" 
-                href="/monitor" 
-                active={pathname === "/monitor"} 
-              />
-              <NavItem 
                 icon={History} 
                 label="History" 
                 href="/history" 
                 active={pathname === "/history"} 
               />
-              <NavItem 
-                icon={BarChart3} 
-                label="Analytics" 
-                href="/analytics" 
-                active={pathname === "/analytics"} 
-              />
             </div>
             
             <div className="space-y-1">
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Power BI
+                Data Management
               </h3>
-              <NavItem 
-                icon={Folder} 
-                label="Workspaces" 
-                href="/workspaces" 
-                active={pathname === "/workspaces" || pathname.startsWith("/workspaces/")} 
-              />
-              <NavItem 
-                icon={FileText} 
-                label="Reports" 
-                href="/reports" 
-                active={pathname === "/reports"} 
-              />
-              <NavItem 
-                icon={MoveHorizontal} 
-                label="Report Migration" 
-                href="/report-migration" 
-                active={pathname === "/report-migration"} 
-              />
               <NavItem 
                 icon={Database} 
                 label="Data Catalog" 
                 href="/data-catalog" 
                 active={pathname === "/data-catalog"} 
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Client Management
+              </h3>
+              <NavItem 
+                icon={UserPlus} 
+                label="Client Onboarding" 
+                href="/client-onboarding" 
+                active={pathname === "/client-onboarding"} 
               />
             </div>
             

@@ -4,7 +4,11 @@ import { Sidebar } from './Sidebar';
 import { AppHeader } from './AppHeader';
 import { Outlet } from 'react-router-dom';
 
-export function AppLayout() {
+interface AppLayoutProps {
+  onLogout: () => void;
+}
+
+export function AppLayout({ onLogout }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const toggleSidebar = () => {
@@ -19,7 +23,7 @@ export function AppLayout() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <AppHeader toggleSidebar={toggleSidebar} />
+        <AppHeader toggleSidebar={toggleSidebar} onLogout={onLogout} />
         <main className="flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
         </main>
