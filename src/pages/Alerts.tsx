@@ -8,6 +8,7 @@ import { Alert, AlertFiltersType } from '@/types/alerts';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Alerts: React.FC = () => {
   const [allAlerts, setAllAlerts] = useState<Alert[]>(alerts);
@@ -20,6 +21,7 @@ const Alerts: React.FC = () => {
     sortBy: 'name',
     sortOrder: 'asc'
   });
+  const { toast } = useToast();
 
   // Real-time search functionality
   useEffect(() => {
@@ -86,6 +88,15 @@ const Alerts: React.FC = () => {
     setAllAlerts(updatedAlerts);
   };
 
+  const handleDeleteAlert = (alertId: string) => {
+    const updatedAlerts = allAlerts.filter(alert => alert.id !== alertId);
+    setAllAlerts(updatedAlerts);
+    toast({
+      title: "Alert deleted",
+      description: "The alert has been successfully deleted."
+    });
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6 flex justify-between items-start">
@@ -125,6 +136,7 @@ const Alerts: React.FC = () => {
               key={alert.id} 
               alert={alert} 
               onToggleActive={handleToggleActive}
+              onDelete={handleDeleteAlert}
             />
           ))
         ) : (

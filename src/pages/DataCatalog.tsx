@@ -96,6 +96,11 @@ const DataCatalog: React.FC = () => {
     navigate(`/data-catalog/view/${tableId}`);
   };
 
+  const truncateDescription = (description: string, maxLength: number = 100) => {
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + '...';
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6 flex justify-between items-start">
@@ -111,12 +116,14 @@ const DataCatalog: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tables.map((table) => (
-          <Card key={table.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
+          <Card key={table.id} className="hover:shadow-md transition-shadow h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <CardTitle className="text-lg mb-2">{table.tableName}</CardTitle>
-                  <p className="text-sm text-muted-foreground mb-3">{table.tableDescription}</p>
+                  <p className="text-sm text-muted-foreground mb-3 min-h-[3rem]">
+                    {truncateDescription(table.tableDescription)}
+                  </p>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">
                       {table.columns.length} column{table.columns.length !== 1 ? 's' : ''}
@@ -128,7 +135,7 @@ const DataCatalog: React.FC = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow flex flex-col justify-between">
               <div className="space-y-3">
                 <div>
                   <h4 className="text-sm font-medium mb-2">Sample Columns:</h4>
@@ -146,27 +153,27 @@ const DataCatalog: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewTable(table.id)}
-                    className="flex-1"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditTable(table.id)}
-                    className="flex-1"
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewTable(table.id)}
+                  className="flex-1"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditTable(table.id)}
+                  className="flex-1"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Edit
+                </Button>
               </div>
             </CardContent>
           </Card>

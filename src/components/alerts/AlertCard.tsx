@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -9,25 +10,45 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   AlertCircle, 
   Clock, 
   DollarSign, 
   BarChart2, 
-  PowerOff 
+  PowerOff,
+  Trash2
 } from 'lucide-react';
 import { Alert } from '@/types/alerts';
 import { Switch } from "@/components/ui/switch";
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AlertCardProps {
   alert: Alert;
   onToggleActive: (id: string, active: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
+export function AlertCard({ alert, onToggleActive, onDelete }: AlertCardProps) {
   const handleToggle = () => {
     onToggleActive(alert.id, !alert.active);
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(alert.id);
+    }
   };
   
   return (
@@ -41,11 +62,36 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
       <CardHeader className="space-y-1">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{alert.name}</CardTitle>
-          <Switch 
-            checked={alert.active} 
-            onCheckedChange={handleToggle}
-            aria-label={alert.active ? "Deactivate alert" : "Activate alert"}
-          />
+          <div className="flex items-center gap-2">
+            <Switch 
+              checked={alert.active} 
+              onCheckedChange={handleToggle}
+              aria-label={alert.active ? "Deactivate alert" : "Activate alert"}
+            />
+            {onDelete && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Alert</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{alert.name}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
         <CardDescription>{alert.description}</CardDescription>
         <div className="flex gap-2 flex-wrap">
@@ -96,8 +142,10 @@ export function AlertCard({ alert, onToggleActive }: AlertCardProps) {
         </div>
       </CardContent>
       <CardFooter className="backdrop-blur-sm">
-        <Link to={`/alerts/${alert.id}`} className="text-primary text-sm hover:underline w-full text-center">
-          View Details
+        <Link to={`/alerts/edit/${alert.id}`} className="w-full">
+          <Button variant="default" className="w-full">
+            Edit Alert
+          </Button>
         </Link>
       </CardFooter>
     </Card>

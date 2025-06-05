@@ -11,6 +11,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import Alerts from "./pages/Alerts";
 import AlertDetail from "./pages/AlertDetail";
 import CreateAlert from "./pages/CreateAlert";
+import EditAlert from "./pages/EditAlert";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
@@ -137,6 +138,7 @@ const App = () => {
               {/* Alert Routes */}
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/alerts/create" element={<CreateAlert />} />
+              <Route path="/alerts/edit/:id" element={<EditAlert />} />
               <Route path="/alerts/:id" element={<AlertDetail />} />
               <Route path="/history" element={<History />} />
               
