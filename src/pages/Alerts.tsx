@@ -97,6 +97,11 @@ const Alerts: React.FC = () => {
     });
   };
 
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6 flex justify-between items-start">
@@ -112,9 +117,9 @@ const Alerts: React.FC = () => {
         </Link>
       </div>
       
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      {/* Search Bar and Filters in same line */}
+      <div className="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -122,19 +127,23 @@ const Alerts: React.FC = () => {
             className="pl-8"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            data-lov-id="src/pages/Alerts.tsx:108:10"
           />
         </div>
+        <div className="flex-shrink-0">
+          <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
+        </div>
       </div>
-      
-      <AlertFilters filters={filters} onFilterChange={handleFilterChange} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAlerts.length > 0 ? (
           filteredAlerts.map((alert) => (
             <AlertCard 
               key={alert.id} 
-              alert={alert} 
+              alert={{
+                ...alert,
+                description: truncateText(alert.description, 100),
+                reportName: truncateText(alert.reportName, 50)
+              }} 
               onToggleActive={handleToggleActive}
               onDelete={handleDeleteAlert}
             />

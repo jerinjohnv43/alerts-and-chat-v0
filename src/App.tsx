@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +18,7 @@ import History from "./pages/History";
 import DataCatalog from "./pages/DataCatalog";
 import DataCatalogManage from "./pages/DataCatalog/DataCatalogManage";
 import DataCatalogView from "./pages/DataCatalog/DataCatalogView";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import AdminConsole from "./pages/AdminConsole/AdminConsole";
 import ClientOnboarding from "./pages/AdminConsole/ClientOnboarding";
@@ -140,6 +142,9 @@ const App = () => {
               <Route path="/alerts/edit/:id" element={<EditAlert />} />
               <Route path="/alerts/:id" element={<AlertDetail />} />
               <Route path="/history" element={<History />} />
+              
+              {/* Chat Routes */}
+              <Route path="/chat" element={<Chat />} />
               
               {/* Data Catalog Routes */}
               <Route path="/data-catalog" element={<DataCatalog />} />

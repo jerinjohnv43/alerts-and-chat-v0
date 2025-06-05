@@ -10,7 +10,8 @@ import {
   X,
   User,
   Database,
-  Brain
+  Brain,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -98,8 +99,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             
             <div className="space-y-1">
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Data Management
+                Chat With Data
               </h3>
+              <NavItem 
+                icon={MessageCircle} 
+                label="Chat" 
+                href="/chat" 
+                active={pathname === "/chat"} 
+              />
               <NavItem 
                 icon={Database} 
                 label="Data Catalog" 

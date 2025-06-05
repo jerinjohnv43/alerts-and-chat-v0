@@ -24,9 +24,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Get stored client credentials from admin console
+    const adminConsoleData = JSON.parse(localStorage.getItem('adminConsoleClients') || '[]');
+    
+    // Check default credentials
+    const isDefaultCredentials = username === 'admin' && password === 'password';
+    
+    // Check client credentials
+    const clientUser = adminConsoleData.find((client: any) => 
+      client.adminEmail === username && client.password === password
+    );
+
     // Simulate login delay
     setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
+      if (isDefaultCredentials || clientUser) {
         onLogin();
         navigate('/alerts');
         toast({
@@ -45,15 +56,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const handleMicrosoftLogin = () => {
-    // Simulate Microsoft OAuth login
+    // Mock Microsoft OAuth setup
     setIsLoading(true);
+    
+    // Simulate OAuth flow
+    const mockMicrosoftEmail = 'username@datasemantics.co';
+    const mockMicrosoftPassword = 'password';
+    
+    // Simulate OAuth redirect and verification
     setTimeout(() => {
-      onLogin();
-      navigate('/alerts');
-      toast({
-        title: "Microsoft login successful",
-        description: "Welcome to AI Tell!"
-      });
+      // Mock OAuth verification
+      if (mockMicrosoftEmail && mockMicrosoftPassword) {
+        onLogin();
+        navigate('/alerts');
+        toast({
+          title: "Microsoft login successful",
+          description: `Welcome ${mockMicrosoftEmail}! Redirected from Microsoft OAuth.`
+        });
+      } else {
+        toast({
+          title: "Microsoft login failed",
+          description: "OAuth verification failed. Please try again.",
+          variant: "destructive"
+        });
+      }
       setIsLoading(false);
     }, 2000);
   };
@@ -80,7 +106,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter username"
+                  placeholder="Enter username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -98,7 +124,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 />
               </div>
               <div className="text-sm text-muted-foreground text-center">
-                Default credentials: admin / password
+                Default credentials: admin / password<br/>
+                Microsoft OAuth: username@datasemantics.co / password
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
@@ -143,7 +170,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               >
                 Admin Console
               </Button>
-            </CardFooter>
+            </CardContent>
           </form>
         </Card>
       </div>

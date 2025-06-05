@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, LogOut, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, LogOut, ArrowLeft, Brain } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
 
 interface ClientOnboardingProps {
@@ -62,11 +61,24 @@ const ClientOnboarding: React.FC<ClientOnboardingProps> = ({ onLogout }) => {
       return;
     }
     
-    // Submit the form data
-    console.log('Client onboarding data:', formData);
+    // Save to localStorage for client management
+    const existingClients = JSON.parse(localStorage.getItem('adminConsoleClients') || '[]');
+    const clientData = {
+      id: isEdit ? clientId : Date.now().toString(),
+      ...formData,
+      createdAt: new Date().toISOString(),
+      status: 'Active'
+    };
+    
+    const updatedClients = isEdit 
+      ? existingClients.map((client: any) => client.id === clientId ? clientData : client)
+      : [...existingClients, clientData];
+    
+    localStorage.setItem('adminConsoleClients', JSON.stringify(updatedClients));
+    
     toast({
       title: isEdit ? "Client Updated" : "Client Onboarding Complete",
-      description: isEdit ? "Client has been successfully updated" : "Client has been successfully onboarded",
+      description: isEdit ? "Client has been successfully updated" : "Client has been successfully onboarded and can now login",
     });
     
     navigate('/admin-console');
@@ -87,7 +99,7 @@ const ClientOnboarding: React.FC<ClientOnboardingProps> = ({ onLogout }) => {
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold">
-                BI
+                <Brain className="h-5 w-5" />
               </div>
               <h1 className="text-xl font-semibold">
                 {isEdit ? 'Edit Client' : 'Client Onboarding'}

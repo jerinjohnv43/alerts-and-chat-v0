@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -319,89 +318,88 @@ const DataCatalogManage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {currentTable.columns.length > 0 ? (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Column Name</TableHead>
-                      <TableHead>Data Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Tags</TableHead>
-                      <TableHead>Categories</TableHead>
-                      <TableHead>Relationship</TableHead>
-                      <TableHead>Default Condition</TableHead>
+                      <TableHead className="min-w-[120px]">Column Name</TableHead>
+                      <TableHead className="min-w-[100px]">Data Type</TableHead>
+                      <TableHead className="min-w-[200px]">Description</TableHead>
+                      <TableHead className="min-w-[120px]">Tags</TableHead>
+                      <TableHead className="min-w-[120px]">Categories</TableHead>
+                      <TableHead className="min-w-[150px]">Relationship</TableHead>
+                      <TableHead className="min-w-[150px]">Default Condition</TableHead>
                       <TableHead className="w-[50px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {currentTable.columns.map((column) => (
                       <TableRow key={column.id}>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.columnName}
                             onChange={(e) => updateColumn(column.id, 'columnName', e.target.value)}
                             placeholder="Column name"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.dataType}
                             onChange={(e) => updateColumn(column.id, 'dataType', e.target.value)}
                             placeholder="Data type"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.description}
                             onChange={(e) => updateColumn(column.id, 'description', e.target.value)}
                             placeholder="Description"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.tags}
                             onChange={(e) => updateColumn(column.id, 'tags', e.target.value)}
                             placeholder="Tags"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.categories}
                             onChange={(e) => updateColumn(column.id, 'categories', e.target.value)}
                             placeholder="Categories"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Input
+                        <TableCell className="p-2">
+                          <div className="space-y-2">
+                            <Textarea
                               value={column.relationshipTableName}
                               onChange={(e) => updateColumn(column.id, 'relationshipTableName', e.target.value)}
-                              placeholder="Table"
-                              className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 w-20"
+                              placeholder="Table name"
+                              className="min-h-[40px]"
                             />
-                            <span className="text-muted-foreground">.</span>
-                            <Input
+                            <Textarea
                               value={column.relationshipColumnName}
                               onChange={(e) => updateColumn(column.id, 'relationshipColumnName', e.target.value)}
-                              placeholder="Column"
-                              className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 w-20"
+                              placeholder="Column name"
+                              className="min-h-[40px]"
                             />
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Input
+                        <TableCell className="p-2">
+                          <Textarea
                             value={column.defaultCondition}
                             onChange={(e) => updateColumn(column.id, 'defaultCondition', e.target.value)}
                             placeholder="Default condition"
-                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="min-h-[60px] resize-y"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-2">
                           <Button
                             variant="ghost"
                             size="sm"

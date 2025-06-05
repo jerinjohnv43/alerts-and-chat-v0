@@ -1,643 +1,330 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Bell,
-  ShieldAlert,
-  Mail,
-  Heading1,
-  Save,
-  Sliders,
-  FileKey,
-  Database,
-  Boxes,
-  MessageSquare,
-  Users
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff } from "lucide-react";
 
-// Email templates defined here to match those in the CreateAlert component
-const emailTemplates = [
-  { id: "standard", name: "Standard Alert", label: "Standard Alert Template" },
-  { id: "detailed", name: "Detailed Report", label: "Detailed Report Template" },
-  { id: "executive", name: "Executive Summary", label: "Executive Summary Template" },
-];
-
-const Settings = () => {
+const Settings: React.FC = () => {
   const { toast } = useToast();
-  const [activeTemplate, setActiveTemplate] = useState("standard");
-  
-  // Default template content
-  const defaultTemplates = {
-    standard: `Dear {{recipient_name}},
+  const [showSecrets, setShowSecrets] = useState({
+    clientSecret: false,
+    apiKey: false
+  });
 
-An alert has been triggered for the following report:
-Name: {{alert_name}}
-Report: {{report_name}}
-Time: {{trigger_time}}
-
-LLM Insights:
-{{llm_insights}}
-
-Click the link below to view the report:
-{{report_url}}
-
-Regards,
-Alert Insights Team`,
+  const [settings, setSettings] = useState({
+    // API Configuration
+    apiKey: '',
+    apiEndpoint: 'https://api.aitell.com/v1',
     
-    detailed: `Dear {{recipient_name}},
-
-We've detected significant changes in your monitored metrics:
-
-Alert: {{alert_name}}
-Report: {{report_name}}
-Triggered: {{trigger_time}}
-
-DETAILED ANALYSIS:
-{{llm_insights}}
-
-KEY METRICS:
-- Current Value: {{current_value}}
-- Previous Value: {{previous_value}}
-- Change: {{change_percentage}}%
-
-DIMENSIONS AFFECTED:
-{{affected_dimensions}}
-
-For a comprehensive breakdown, please review the full report:
-{{report_url}}
-
-If you have any questions about this alert, please contact the data team.
-
-Best regards,
-Alert Insights Analytics Team`,
+    // Power BI Connection Settings
+    powerBiAppId: '',
+    powerBiClientId: '',
+    powerBiClientSecret: '',
     
-    executive: `EXECUTIVE SUMMARY
+    // Teams Integration
+    teamsEnabled: false,
+    teamsWebhookUrl: '',
+    
+    // WhatsApp Integration
+    whatsappEnabled: false,
+    whatsappApiKey: '',
+    whatsappPhoneNumber: '',
+    
+    // Email Templates
+    alertEmailTemplate: 'Dear {{user}},\n\nAn alert has been triggered: {{alertName}}\n\nDetails: {{alertDetails}}\n\nBest regards,\nAI Tell Team',
+    notificationEmailTemplate: 'Hello {{user}},\n\nYou have a new notification: {{message}}\n\nBest regards,\nAI Tell Team',
+    
+    // Global Settings
+    timezone: 'UTC',
+    dateFormat: 'YYYY-MM-DD',
+    maxAlertsPerUser: 50,
+    alertRetentionDays: 90
+  });
 
-ALERT: {{alert_name}}
-TIME: {{trigger_time}}
-
-BUSINESS IMPACT:
-{{llm_insights}}
-
-KEY TAKEAWAY:
-{{key_takeaway}}
-
-RECOMMENDED ACTION:
-{{recommended_action}}
-
-View full report: {{report_url}}
-
-Alert Insights Team`
-  };
-  
-  const [templates, setTemplates] = useState(defaultTemplates);
-  
-  const handleTemplateChange = (value: string) => {
-    setActiveTemplate(value);
-  };
-  
-  const handleTemplateContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTemplates({
-      ...templates,
-      [activeTemplate]: e.target.value
-    });
-  };
-  
-  const handleSaveSettings = () => {
+  const handleSave = () => {
+    localStorage.setItem('aiTellSettings', JSON.stringify(settings));
     toast({
       title: "Settings saved",
-      description: "Your settings have been saved successfully."
+      description: "Your settings have been successfully saved."
     });
   };
-  
+
+  const handleInputChange = (field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const toggleSecretVisibility = (field: string) => {
+    setShowSecrets(prev => ({
+      ...prev,
+      [field]: !prev[field as keyof typeof prev]
+    }));
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-muted-foreground">
-          Configure your alert system settings and preferences.
-        </p>
+        <p className="text-muted-foreground">Configure your AI Tell application settings</p>
       </div>
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notification Settings
-              </CardTitle>
-              <CardDescription>
-                Configure how alert notifications are delivered.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Send email notifications when alerts are triggered.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                
-                {/* WhatsApp Notification Setting */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>WhatsApp Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Send WhatsApp messages when alerts are triggered.
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <Separator />
-                
-                {/* MS Teams Notification Setting */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>MS Teams Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Send MS Teams messages when alerts are triggered.
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <Separator />
-                
-                {/* Original notification settings */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Daily Summary</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive a daily summary of all alert activity.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Alert Aggregation</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Group similar alerts into a single notification.
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Failure Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Send admin notifications when alerts fail to process.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Add WhatsApp Configuration Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                WhatsApp Integration
-              </CardTitle>
-              <CardDescription>
-                Configure WhatsApp messaging integration for alerts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-api-key">WhatsApp Business API Key</Label>
-                <Input 
-                  id="whatsapp-api-key" 
-                  type="password"
-                  placeholder="Enter your WhatsApp Business API key"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-phone-id">WhatsApp Phone Number ID</Label>
-                <Input 
-                  id="whatsapp-phone-id" 
-                  placeholder="Enter your WhatsApp Phone Number ID"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-business-id">WhatsApp Business Account ID</Label>
-                <Input 
-                  id="whatsapp-business-id" 
-                  placeholder="Enter your WhatsApp Business Account ID"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Test Connection</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Send a test message to verify your WhatsApp setup.
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">Test</Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Add MS Teams Configuration Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                MS Teams Integration
-              </CardTitle>
-              <CardDescription>
-                Configure Microsoft Teams webhook integration for alerts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="teams-webhook">Teams Incoming Webhook URL</Label>
-                <Input 
-                  id="teams-webhook" 
-                  type="password"
-                  placeholder="Enter your Microsoft Teams webhook URL"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teams-tenant-id">MS Teams Tenant ID</Label>
-                <Input 
-                  id="teams-tenant-id" 
-                  placeholder="Enter your Microsoft Teams Tenant ID"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teams-user-list">Default MS Teams Recipients</Label>
-                <Textarea 
-                  id="teams-user-list"
-                  placeholder="user1@example.com, user2@example.com"
-                  className="min-h-[80px]"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter Microsoft Teams user emails, separated by commas. These users will be available as recipients when creating alerts.
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Test Connection</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Send a test message to verify your Teams integration.
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">Test</Button>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Original security settings card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5" />
-                Security Settings
-              </CardTitle>
-              <CardDescription>
-                Configure security settings for your alert system.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Require 2FA for all admin users.
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Password Policy</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enforce strong password requirements.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>API Access</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Allow API access to alert data.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
+      <div className="space-y-6">
+        {/* API Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>API Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="apiEndpoint">API Endpoint</Label>
+                <Input
+                  id="apiEndpoint"
+                  value={settings.apiEndpoint}
+                  onChange={(e) => handleInputChange('apiEndpoint', e.target.value)}
+                  placeholder="https://api.aitell.com/v1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key</Label>
+                <div className="relative">
+                  <Input
+                    id="apiKey"
+                    type={showSecrets.apiKey ? "text" : "password"}
+                    value={settings.apiKey}
+                    onChange={(e) => handleInputChange('apiKey', e.target.value)}
+                    placeholder="Enter your API key"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => toggleSecretVisibility('apiKey')}
+                  >
+                    {showSecrets.apiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Fabric Connection Settings
-              </CardTitle>
-              <CardDescription>
-                Configure Microsoft Fabric data warehouse connection details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Power BI Connection Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Power BI Connection Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fabric-workspace">Fabric Workspace</Label>
-                <Input 
-                  id="fabric-workspace" 
-                  placeholder="Enter your Fabric workspace name"
+                <Label htmlFor="powerBiAppId">App ID</Label>
+                <Input
+                  id="powerBiAppId"
+                  value={settings.powerBiAppId}
+                  onChange={(e) => handleInputChange('powerBiAppId', e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fabric-warehouse">Warehouse Name</Label>
-                <Input 
-                  id="fabric-warehouse" 
-                  placeholder="Enter your warehouse name"
+                <Label htmlFor="powerBiClientId">Client ID</Label>
+                <Input
+                  id="powerBiClientId"
+                  value={settings.powerBiClientId}
+                  onChange={(e) => handleInputChange('powerBiClientId', e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fabric-endpoint">API Endpoint</Label>
-                <Input 
-                  id="fabric-endpoint" 
-                  placeholder="https://api.fabric.microsoft.com/v1"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fabric-api-key">Fabric API Key</Label>
-                <Input 
-                  id="fabric-api-key" 
-                  type="password" 
-                  placeholder="Enter your Fabric API key"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fabric-connection-type">Connection Type</Label>
-                <Select defaultValue="direct">
-                  <SelectTrigger id="fabric-connection-type">
-                    <SelectValue placeholder="Select a connection type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="direct">Direct Connection</SelectItem>
-                    <SelectItem value="gateway">Gateway Connection</SelectItem>
-                    <SelectItem value="oauth">OAuth</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Test Connection on Save</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Verify connectivity when saving settings.
-                  </p>
+                <Label htmlFor="powerBiClientSecret">Client Secret</Label>
+                <div className="relative">
+                  <Input
+                    id="powerBiClientSecret"
+                    type={showSecrets.clientSecret ? "text" : "password"}
+                    value={settings.powerBiClientSecret}
+                    onChange={(e) => handleInputChange('powerBiClientSecret', e.target.value)}
+                    placeholder="Enter client secret"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => toggleSecretVisibility('clientSecret')}
+                  >
+                    {showSecrets.clientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </div>
-                <Switch defaultChecked />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Templates
-              </CardTitle>
-              <CardDescription>
-                Customize the email templates used for notifications.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Tabs defaultValue="standard" value={activeTemplate} onValueChange={handleTemplateChange}>
-                <TabsList className="grid w-full grid-cols-3">
-                  {emailTemplates.map(template => (
-                    <TabsTrigger key={template.id} value={template.id}>
-                      {template.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                
-                {emailTemplates.map(template => (
-                  <TabsContent key={template.id} value={template.id}>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`email-subject-${template.id}`}>Email Subject</Label>
-                        <Input 
-                          id={`email-subject-${template.id}`} 
-                          defaultValue={`[Alert] {{alert_name}} - ${template.name}`}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`email-template-${template.id}`}>{template.label}</Label>
-                        <Textarea 
-                          id={`email-template-${template.id}`} 
-                          className="min-h-[250px] font-mono text-sm" 
-                          value={templates[template.id as keyof typeof templates]}
-                          onChange={handleTemplateContentChange}
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                ))}
-                
-                <div className="text-sm text-muted-foreground mt-4">
-                  <p className="font-semibold mb-1">Available variables:</p>
-                  <div className="grid grid-cols-2 gap-y-1 gap-x-4">
-                    <span>&#123;&#123;alert_name&#125;&#125;</span>
-                    <span>&#123;&#123;report_name&#125;&#125;</span>
-                    <span>&#123;&#123;trigger_time&#125;&#125;</span>
-                    <span>&#123;&#123;recipient_name&#125;&#125;</span>
-                    <span>&#123;&#123;llm_insights&#125;&#125;</span>
-                    <span>&#123;&#123;report_url&#125;&#125;</span>
-                    <span>&#123;&#123;current_value&#125;&#125;</span>
-                    <span>&#123;&#123;previous_value&#125;&#125;</span>
-                    <span>&#123;&#123;change_percentage&#125;&#125;</span>
-                    <span>&#123;&#123;affected_dimensions&#125;&#125;</span>
-                    <span>&#123;&#123;key_takeaway&#125;&#125;</span>
-                    <span>&#123;&#123;recommended_action&#125;&#125;</span>
-                  </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Teams Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Teams Integration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="teamsEnabled"
+                checked={settings.teamsEnabled}
+                onCheckedChange={(checked) => handleInputChange('teamsEnabled', checked)}
+              />
+              <Label htmlFor="teamsEnabled">Enable Teams Integration</Label>
+            </div>
+            {settings.teamsEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="teamsWebhookUrl">Teams Webhook URL</Label>
+                <Input
+                  id="teamsWebhookUrl"
+                  value={settings.teamsWebhookUrl}
+                  onChange={(e) => handleInputChange('teamsWebhookUrl', e.target.value)}
+                  placeholder="https://your-teams-webhook-url"
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>WhatsApp Integration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="whatsappEnabled"
+                checked={settings.whatsappEnabled}
+                onCheckedChange={(checked) => handleInputChange('whatsappEnabled', checked)}
+              />
+              <Label htmlFor="whatsappEnabled">Enable WhatsApp Integration</Label>
+            </div>
+            {settings.whatsappEnabled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappApiKey">WhatsApp API Key</Label>
+                  <Input
+                    id="whatsappApiKey"
+                    type="password"
+                    value={settings.whatsappApiKey}
+                    onChange={(e) => handleInputChange('whatsappApiKey', e.target.value)}
+                    placeholder="Enter WhatsApp API key"
+                  />
                 </div>
-              </Tabs>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileKey className="h-5 w-5" />
-                API Configuration
-              </CardTitle>
-              <CardDescription>
-                Configure API settings for your alert system.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappPhoneNumber">Phone Number</Label>
+                  <Input
+                    id="whatsappPhoneNumber"
+                    value={settings.whatsappPhoneNumber}
+                    onChange={(e) => handleInputChange('whatsappPhoneNumber', e.target.value)}
+                    placeholder="+1234567890"
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Email Templates */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email Templates</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="alertEmailTemplate">Alert Email Template</Label>
+              <Textarea
+                id="alertEmailTemplate"
+                value={settings.alertEmailTemplate}
+                onChange={(e) => handleInputChange('alertEmailTemplate', e.target.value)}
+                placeholder="Enter alert email template"
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                Available variables: {'{'}{'}'}{'{'}user{'}'}, {'{'}alertName{'}'}, {'{'}alertDetails{'}'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notificationEmailTemplate">Notification Email Template</Label>
+              <Textarea
+                id="notificationEmailTemplate"
+                value={settings.notificationEmailTemplate}
+                onChange={(e) => handleInputChange('notificationEmailTemplate', e.target.value)}
+                placeholder="Enter notification email template"
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                Available variables: {'{'}user{'}'}, {'{'}message{'}'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Global Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Global Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="azure-endpoint">Azure OpenAI Endpoint</Label>
-                <Input 
-                  id="azure-endpoint" 
-                  placeholder="https://your-resource.openai.azure.com/"
+                <Label htmlFor="timezone">Timezone</Label>
+                <Input
+                  id="timezone"
+                  value={settings.timezone}
+                  onChange={(e) => handleInputChange('timezone', e.target.value)}
+                  placeholder="UTC"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="azure-api-key">Azure OpenAI API Key</Label>
-                <Input 
-                  id="azure-api-key" 
-                  type="password"
-                  placeholder="Enter your Azure OpenAI API key"
+                <Label htmlFor="dateFormat">Date Format</Label>
+                <Input
+                  id="dateFormat"
+                  value={settings.dateFormat}
+                  onChange={(e) => handleInputChange('dateFormat', e.target.value)}
+                  placeholder="YYYY-MM-DD"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="llm-model">LLM Model</Label>
-                <Select defaultValue="gpt-4">
-                  <SelectTrigger id="llm-model">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gpt-4">GPT-4</SelectItem>
-                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                    <SelectItem value="claude-2">Claude 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="maxAlertsPerUser">Max Alerts Per User</Label>
+                <Input
+                  id="maxAlertsPerUser"
+                  type="number"
+                  value={settings.maxAlertsPerUser}
+                  onChange={(e) => handleInputChange('maxAlertsPerUser', parseInt(e.target.value))}
+                  placeholder="50"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="llm-temperature">Temperature</Label>
-                <Input 
-                  id="llm-temperature" 
-                  type="number" 
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  defaultValue="0.7"
+                <Label htmlFor="alertRetentionDays">Alert Retention (Days)</Label>
+                <Input
+                  id="alertRetentionDays"
+                  type="number"
+                  value={settings.alertRetentionDays}
+                  onChange={(e) => handleInputChange('alertRetentionDays', parseInt(e.target.value))}
+                  placeholder="90"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Values between 0-1. Lower values produce more consistent outputs, higher values produce more creative outputs.
-                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="llm-max-tokens">Max Output Tokens</Label>
-                <Input 
-                  id="llm-max-tokens" 
-                  type="number" 
-                  min="100"
-                  defaultValue="2000"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Maximum number of tokens the model should generate in its response.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button onClick={handleSave} size="lg">
+            Save Settings
+          </Button>
         </div>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sliders className="h-5 w-5" />
-            Global Settings
-          </CardTitle>
-          <CardDescription>
-            Configure global settings for the alert system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Default Timezone</Label>
-              <Select defaultValue="utc">
-                <SelectTrigger id="timezone">
-                  <SelectValue placeholder="Select a timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="utc">UTC</SelectItem>
-                  <SelectItem value="est">Eastern Time (EST/EDT)</SelectItem>
-                  <SelectItem value="pst">Pacific Time (PST/PDT)</SelectItem>
-                  <SelectItem value="cet">Central European Time (CET)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cost-threshold">Cost Alert Threshold ($)</Label>
-              <Input 
-                id="cost-threshold" 
-                type="number" 
-                defaultValue="50"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="retention-period">Data Retention Period (days)</Label>
-              <Input 
-                id="retention-period" 
-                type="number" 
-                defaultValue="90"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="max-alerts">Maximum Active Alerts</Label>
-              <Input 
-                id="max-alerts" 
-                type="number" 
-                defaultValue="100"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="system-name">System Name</Label>
-            <Input 
-              id="system-name" 
-              defaultValue="Alert Insights Dashboard"
-            />
-          </div>
-          
-          <div className="flex justify-end">
-            <Button className="flex items-center gap-2" onClick={handleSaveSettings}>
-              <Save className="h-4 w-4" />
-              Save Settings
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
