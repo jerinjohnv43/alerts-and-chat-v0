@@ -170,7 +170,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               >
                 Admin Console
               </Button>
-            </CardContent>
+            </CardFooter>
           </form>
         </Card>
       </div>
