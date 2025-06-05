@@ -9,7 +9,8 @@ import {
   History,
   X,
   User,
-  Database
+  Database,
+  Brain
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,9 +68,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex h-14 items-center border-b px-4 justify-between">
           <Link to="/alerts" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold">
-              BI
+              <Brain className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold">BI Admin Portal</span>
+            <span className="text-lg font-semibold">AI Tell</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />

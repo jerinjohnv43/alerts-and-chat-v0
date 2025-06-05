@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Brain } from "lucide-react";
 
 interface LoginProps {
   onLogin: () => void;
@@ -30,7 +31,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         navigate('/alerts');
         toast({
           title: "Login successful",
-          description: "Welcome to BI Admin Portal!"
+          description: "Welcome to AI Tell!"
         });
       } else {
         toast({
@@ -51,7 +52,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       navigate('/alerts');
       toast({
         title: "Microsoft login successful",
-        description: "Welcome to BI Admin Portal!"
+        description: "Welcome to AI Tell!"
       });
       setIsLoading(false);
     }, 2000);
@@ -64,10 +65,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 rounded bg-gradient-to-r from-blue-600 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                BI
+                <Brain className="h-8 w-8" />
               </div>
             </div>
-            <CardTitle className="text-2xl text-center">BI Admin Portal</CardTitle>
+            <CardTitle className="text-2xl text-center">AI Tell</CardTitle>
             <CardDescription className="text-center">
               Sign in to your account to continue
             </CardDescription>

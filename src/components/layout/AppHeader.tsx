@@ -3,7 +3,8 @@ import React from 'react';
 import { 
   Menu,
   LogOut,
-  User
+  User,
+  Brain
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -30,9 +31,9 @@ export function AppHeader({ toggleSidebar, onLogout }: AppHeaderProps) {
         <div className="flex items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-gradient-to-r from-primary-600 to-primary-500 flex items-center justify-center text-white font-bold shadow-sm">
-              BI
+              <Brain className="h-5 w-5" />
             </div>
-            <h1 className="text-xl font-semibold hidden md:block gradient-heading">BI Admin Portal</h1>
+            <h1 className="text-xl font-semibold hidden md:block gradient-heading">AI Tell</h1>
           </div>
         </div>
       </div>

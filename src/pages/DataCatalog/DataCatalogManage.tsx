@@ -1,13 +1,22 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Upload, Wand2, ArrowLeft, Edit } from "lucide-react";
+import { Plus, Trash2, Upload, Wand2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface TableColumn {
   id: string;
@@ -36,7 +45,6 @@ const DataCatalogManage: React.FC = () => {
     columns: []
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -70,7 +78,6 @@ const DataCatalogManage: React.FC = () => {
       ...prev,
       columns: [...prev.columns, newColumn]
     }));
-    setEditingColumn(newColumn.id);
   };
 
   const removeColumn = (columnId: string) => {
@@ -223,10 +230,6 @@ const DataCatalogManage: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleEditColumn = (columnId: string) => {
-    setEditingColumn(editingColumn === columnId ? null : columnId);
-  };
-
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6 flex items-center gap-4">
@@ -316,142 +319,101 @@ const DataCatalogManage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {currentTable.columns.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-200 px-4 py-2 text-left">Column Name</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Data Type</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Description</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Tags</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Categories</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Relationship</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Default Condition</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Column Name</TableHead>
+                      <TableHead>Data Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead>Categories</TableHead>
+                      <TableHead>Relationship</TableHead>
+                      <TableHead>Default Condition</TableHead>
+                      <TableHead className="w-[50px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {currentTable.columns.map((column) => (
-                      <tr key={column.id} className="hover:bg-gray-50">
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.columnName}
-                              onChange={(e) => updateColumn(column.id, 'columnName', e.target.value)}
-                              placeholder="Column name"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span className="font-medium">{column.columnName}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.dataType}
-                              onChange={(e) => updateColumn(column.id, 'dataType', e.target.value)}
-                              placeholder="Data type"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span>{column.dataType}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.description}
-                              onChange={(e) => updateColumn(column.id, 'description', e.target.value)}
-                              placeholder="Description"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span>{column.description}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.tags}
-                              onChange={(e) => updateColumn(column.id, 'tags', e.target.value)}
-                              placeholder="Tags"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span className="text-sm text-blue-600">{column.tags}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.categories}
-                              onChange={(e) => updateColumn(column.id, 'categories', e.target.value)}
-                              placeholder="Categories"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span>{column.categories}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <div className="flex gap-1">
-                              <Input
-                                value={column.relationshipTableName}
-                                onChange={(e) => updateColumn(column.id, 'relationshipTableName', e.target.value)}
-                                placeholder="Table"
-                                className="h-8 w-20"
-                              />
-                              <Input
-                                value={column.relationshipColumnName}
-                                onChange={(e) => updateColumn(column.id, 'relationshipColumnName', e.target.value)}
-                                placeholder="Column"
-                                className="h-8 w-20"
-                              />
-                            </div>
-                          ) : (
-                            <span>
-                              {column.relationshipTableName && column.relationshipColumnName 
-                                ? `${column.relationshipTableName}.${column.relationshipColumnName}`
-                                : '-'
-                              }
-                            </span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
-                          {editingColumn === column.id ? (
-                            <Input
-                              value={column.defaultCondition}
-                              onChange={(e) => updateColumn(column.id, 'defaultCondition', e.target.value)}
-                              placeholder="Default condition"
-                              className="h-8"
-                            />
-                          ) : (
-                            <span>{column.defaultCondition || '-'}</span>
-                          )}
-                        </td>
-                        <td className="border border-gray-200 px-4 py-2">
+                      <TableRow key={column.id}>
+                        <TableCell>
+                          <Input
+                            value={column.columnName}
+                            onChange={(e) => updateColumn(column.id, 'columnName', e.target.value)}
+                            placeholder="Column name"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.dataType}
+                            onChange={(e) => updateColumn(column.id, 'dataType', e.target.value)}
+                            placeholder="Data type"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.description}
+                            onChange={(e) => updateColumn(column.id, 'description', e.target.value)}
+                            placeholder="Description"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.tags}
+                            onChange={(e) => updateColumn(column.id, 'tags', e.target.value)}
+                            placeholder="Tags"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.categories}
+                            onChange={(e) => updateColumn(column.id, 'categories', e.target.value)}
+                            placeholder="Categories"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
                           <div className="flex gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditColumn(column.id)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeColumn(column.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <Input
+                              value={column.relationshipTableName}
+                              onChange={(e) => updateColumn(column.id, 'relationshipTableName', e.target.value)}
+                              placeholder="Table"
+                              className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 w-20"
+                            />
+                            <span className="text-muted-foreground">.</span>
+                            <Input
+                              value={column.relationshipColumnName}
+                              onChange={(e) => updateColumn(column.id, 'relationshipColumnName', e.target.value)}
+                              placeholder="Column"
+                              className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 w-20"
+                            />
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={column.defaultCondition}
+                            onChange={(e) => updateColumn(column.id, 'defaultCondition', e.target.value)}
+                            placeholder="Default condition"
+                            className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeColumn(column.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
